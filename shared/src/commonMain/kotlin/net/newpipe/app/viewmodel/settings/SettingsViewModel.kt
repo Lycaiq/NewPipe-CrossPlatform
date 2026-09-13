@@ -20,6 +20,8 @@ class SettingsViewModel(buildInfo: BuildInfo) : ViewModel() {
 
     private fun computeVisible(buildInfo: BuildInfo): List<SettingsCategoryType> =
         SettingsCategoryType.entries.filter { type ->
+            // Si es release mostramos la vaina de updates. Si es debug, pues el menú de debug.
+            // Los demás settings se muestran siempre.
             when (type) {
                 SettingsCategoryType.UPDATES -> buildInfo.isReleaseApk
                 SettingsCategoryType.DEBUG -> buildInfo.isDebug
