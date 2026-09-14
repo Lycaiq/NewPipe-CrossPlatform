@@ -158,3 +158,15 @@ aboutLibraries {
         excludeFields.addAll("organization", "scm", "funding")
     }
 }
+
+kotlin {
+    sourceSets {
+        val jvmMain by getting {
+            dependencies {
+                implementation(libs.newpipe.extractor)
+                implementation(libs.squareup.okhttp)
+                implementation("uk.co.caprica:vlcj:4.8.2")
+            }
+        }
+    }
+}

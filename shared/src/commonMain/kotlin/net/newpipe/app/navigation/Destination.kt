@@ -30,4 +30,7 @@ sealed interface Destination : NavKey {
      */
     @Serializable
     data class Player(val streamUrl: String, val title: String = "") : Destination
+
+    @Serializable
+    data object Downloads : Destination
 }

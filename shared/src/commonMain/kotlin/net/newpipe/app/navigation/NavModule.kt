@@ -41,6 +41,10 @@ fun navModule() = module {
     navigation<Destination.Player> { destination ->
         PlayerScreen(destination = destination)
     }
+
+    navigation<Destination.Downloads> { destination ->
+        net.newpipe.app.screen.download.DownloadScreen(destination = destination)
+    }
 }
 
 /**

@@ -5,7 +5,6 @@
 
 package net.newpipe.app.viewmodel.search
 
-import app.cash.turbine.test
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -44,7 +43,7 @@ class SearchViewModelTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         fakeRepo = FakeSearchRepository()
-        viewModel = SearchViewModel(fakeRepo)
+        viewModel = SearchViewModel(fakeRepo, FakeDownloadManager())
     }
 
     @AfterTest
@@ -127,4 +126,12 @@ class FakeSearchRepository : SearchRepository {
     }
 
     override suspend fun resolveStreamUrl(pageUrl: String): String? = resolveResult
+}
+
+class FakeDownloadManager : net.newpipe.app.download.DownloadManager {
+    override val downloads: kotlinx.coroutines.flow.StateFlow<List<net.newpipe.app.download.DownloadTask>> = kotlinx.coroutines.flow.MutableStateFlow(emptyList())
+    override fun enqueue(url: String, title: String, priority: Int): String = "fake"
+    override fun cancel(id: String) {}
+    override fun pause(id: String) {}
+    override fun resume(id: String) {}
 }

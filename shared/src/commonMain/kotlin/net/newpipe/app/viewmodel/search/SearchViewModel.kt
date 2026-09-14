@@ -21,9 +21,14 @@ import net.newpipe.app.search.SearchRepository
 import net.newpipe.app.search.SearchResultItem
 import org.koin.core.annotation.KoinViewModel
 
+import net.newpipe.app.download.DownloadManager
+
 @OptIn(FlowPreview::class)
 @KoinViewModel
-class SearchViewModel(private val repo: SearchRepository) : ViewModel() {
+class SearchViewModel(
+    private val repo: SearchRepository,
+    private val downloadManager: DownloadManager
+) : ViewModel() {
 
     val query: MutableStateFlow<String> = MutableStateFlow("")
     val results: StateFlow<List<SearchResultItem>> get() = _results
@@ -77,6 +82,26 @@ class SearchViewModel(private val repo: SearchRepository) : ViewModel() {
             } catch (e: Exception) {
                 Logger.e("SearchViewModel", e) { "Error resolviendo stream: ${item.streamUrl}" }
                 _error.value = "No se pudo obtener el stream"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    /** Encola una descarga resolviendo primero la URL del stream real */
+    fun enqueueDownload(item: SearchResultItem) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val streamUrl = repo.resolveStreamUrl(item.streamUrl)
+                if (streamUrl != null) {
+                    downloadManager.enqueue(streamUrl, item.title)
+                } else {
+                    _error.value = "No se encontró stream descargable para \"${item.title}\""
+                }
+            } catch (e: Exception) {
+                Logger.e("SearchViewModel", e) { "Error iniciando descarga: ${item.streamUrl}" }
+                _error.value = "Error al iniciar descarga"
             } finally {
                 _isLoading.value = false
             }

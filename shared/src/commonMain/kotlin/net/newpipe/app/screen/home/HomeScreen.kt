@@ -41,6 +41,9 @@ import net.newpipe.app.search.SearchResultItem
 import net.newpipe.app.viewmodel.search.SearchViewModel
 import newpipe.shared.generated.resources.Res
 import newpipe.shared.generated.resources.ic_search
+import newpipe.shared.generated.resources.ic_cloud_download
+import newpipe.shared.generated.resources.ic_file_download
+
 import newpipe.shared.generated.resources.search
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -68,6 +71,12 @@ fun HomeScreen(
             viewModel.resolveAndPlay(item) { streamUrl ->
                 navigator.navigateTo(Destination.Player(streamUrl = streamUrl, title = item.title))
             }
+        },
+        onDownloadsClick = {
+            navigator.navigateTo(Destination.Downloads)
+        },
+        onDownloadClick = { item ->
+            viewModel.enqueueDownload(item)
         }
     )
 }
@@ -80,7 +89,9 @@ fun HomeScreenContent(
     results: List<SearchResultItem> = emptyList(),
     isLoading: Boolean = false,
     error: String? = null,
-    onItemClick: (SearchResultItem) -> Unit = {}
+    onItemClick: (SearchResultItem) -> Unit = {},
+    onDownloadsClick: () -> Unit = {},
+    onDownloadClick: (SearchResultItem) -> Unit = {}
 ) {
     Scaffold { paddingValues ->
         Column(
@@ -88,29 +99,46 @@ fun HomeScreenContent(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            SearchBar(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
-                inputField = {
-                    SearchBarDefaults.InputField(
-                        query = query,
-                        onQueryChange = onQueryChange,
-                        onSearch = onQueryChange,
-                        expanded = false,
-                        onExpandedChange = {},
-                        placeholder = { Text(stringResource(Res.string.search)) },
-                        leadingIcon = {
-                            Icon(
-                                painter = painterResource(Res.drawable.ic_search),
-                                contentDescription = null
-                            )
-                        }
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                SearchBar(
+                    modifier = Modifier.weight(1f),
+                    inputField = {
+                        SearchBarDefaults.InputField(
+                            query = query,
+                            onQueryChange = onQueryChange,
+                            onSearch = onQueryChange,
+                            expanded = false,
+                            onExpandedChange = {},
+                            placeholder = { Text(stringResource(Res.string.search)) },
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(Res.drawable.ic_search),
+                                    contentDescription = null
+                                )
+                            }
+                        )
+                    },
+                    expanded = false,
+                    onExpandedChange = {}
+                ) {}
+                
+                Spacer(Modifier.width(8.dp))
+                
+                androidx.compose.material3.IconButton(
+                    onClick = onDownloadsClick,
+                    modifier = Modifier.padding(top = 4.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_file_download),
+                        contentDescription = "Descargas"
                     )
-                },
-                expanded = false,
-                onExpandedChange = {}
-            ) {}
+                }
+            }
 
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -124,7 +152,11 @@ fun HomeScreenContent(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    else -> ResultsList(results = results, onItemClick = onItemClick)
+                    else -> ResultsList(
+                        results = results, 
+                        onItemClick = onItemClick,
+                        onDownloadClick = onDownloadClick
+                    )
                 }
             }
         }
@@ -134,13 +166,18 @@ fun HomeScreenContent(
 @Composable
 private fun ResultsList(
     results: List<SearchResultItem>,
-    onItemClick: (SearchResultItem) -> Unit
+    onItemClick: (SearchResultItem) -> Unit,
+    onDownloadClick: (SearchResultItem) -> Unit
 ) {
     LazyColumn(
         contentPadding = PaddingValues(vertical = 8.dp)
     ) {
         items(items = results, key = { it.streamUrl }) { item ->
-            ResultItem(item = item, onClick = { onItemClick(item) })
+            ResultItem(
+                item = item, 
+                onClick = { onItemClick(item) },
+                onDownload = { onDownloadClick(item) }
+            )
             HorizontalDivider()
         }
     }
@@ -149,7 +186,8 @@ private fun ResultsList(
 @Composable
 private fun ResultItem(
     item: SearchResultItem,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onDownload: () -> Unit
 ) {
     Surface(
         onClick = onClick,
@@ -186,6 +224,13 @@ private fun ResultItem(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
+                )
+            }
+            
+            androidx.compose.material3.IconButton(onClick = onDownload) {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_cloud_download),
+                    contentDescription = "Descargar"
                 )
             }
         }
