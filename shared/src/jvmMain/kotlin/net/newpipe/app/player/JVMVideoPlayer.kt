@@ -11,37 +11,51 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import org.koin.core.annotation.Singleton
 import uk.co.caprica.vlcj.factory.discovery.NativeDiscovery
+import java.awt.Canvas
 import uk.co.caprica.vlcj.player.base.MediaPlayer
 import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter
-import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent
+
+import java.awt.Color
+import java.awt.Component
+import java.awt.event.HierarchyEvent
+import uk.co.caprica.vlcj.factory.MediaPlayerFactory
+import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer
 
 /**
  * Implementación de VideoPlayer para JVM usando VLCj.
- *
- * Por qué EmbeddedMediaPlayerComponent y no CallbackMediaPlayer:
- * EmbeddedMediaPlayerComponent usa el pipeline de renderizado nativo de VLC,
- * que es sustancialmente más eficiente en CPU que decodificar frame a frame
- * en Kotlin y copiarlos a un ImageBitmap para Compose. Para streams de alta
- * resolución la diferencia es brutal (~30% CPU menos).
  */
 @Singleton(binds = [VideoPlayer::class])
 class JVMVideoPlayer : VideoPlayer {
 
-    private var mediaPlayerComponent: EmbeddedMediaPlayerComponent? = null
-    private val player: MediaPlayer? get() = mediaPlayerComponent?.mediaPlayer()
+    private var factory: MediaPlayerFactory? = null
+    private var mediaPlayer: EmbeddedMediaPlayer? = null
+    private var videoSurfaceCanvas: Canvas? = null
+    private val player: MediaPlayer? get() = mediaPlayer
 
     private val _state = MutableStateFlow(VideoPlayerState())
     override val state: StateFlow<VideoPlayerState> get() = _state
 
     init {
-        // NativeDiscovery busca libvlc en los paths estándar del SO.
-        // Si falla aquí, VLC no está instalado o no está en PATH.
         val found = NativeDiscovery().discover()
         if (!found) {
             Logger.e("JVMVideoPlayer") { "VLC no encontrado en el sistema. El reproductor no funcionará." }
             _state.update { it.copy(errorMessage = "VLC no instalado o no encontrado en PATH") }
         } else {
-            mediaPlayerComponent = EmbeddedMediaPlayerComponent()
+            factory = MediaPlayerFactory()
+            mediaPlayer = factory!!.mediaPlayers().newEmbeddedMediaPlayer()
+            
+            videoSurfaceCanvas = Canvas().apply {
+                background = Color.BLACK
+                // FIX WINDOWS: VLCj lanza "The video surface component must be displayable"
+                // si se intenta atar el Canvas antes de que esté renderizado.
+                addHierarchyListener { e ->
+                    if ((e.changeFlags and HierarchyEvent.SHOWING_CHANGED.toLong()) != 0L) {
+                        if (isShowing) {
+                            mediaPlayer?.videoSurface()?.set(factory!!.videoSurfaces().newVideoSurface(this))
+                        }
+                    }
+                }
+            }
             setupEventListeners()
         }
     }
@@ -142,13 +156,15 @@ class JVMVideoPlayer : VideoPlayer {
     }
 
     override fun release() {
-        mediaPlayerComponent?.release()
-        mediaPlayerComponent = null
+        mediaPlayer?.release()
+        factory?.release()
+        mediaPlayer = null
+        factory = null
         _state.update { it.copy(playbackStatus = PlaybackStatus.IDLE) }
     }
 
     /** Devuelve el componente AWT/Swing para embeber en SwingPanel de Compose */
-    fun getComponent(): EmbeddedMediaPlayerComponent? = mediaPlayerComponent
+    fun getComponent(): Component? = videoSurfaceCanvas
 
     private fun logNoPlayer(action: String) =
         Logger.w("JVMVideoPlayer") { "Acción '$action' ignorada: player no inicializado (¿VLC instalado?)" }
