@@ -139,6 +139,7 @@ kotlin {
         val jvmTest by getting {
             dependencies {
                 implementation(compose.desktop.currentOs)
+                implementation(libs.kotlin.test.core)
             }
         }
     }

@@ -18,6 +18,11 @@ dependencies {
     implementation(compose.desktop.currentOs)
     implementation(libs.jetbrains.coroutines.swing)
     implementation(libs.jetbrains.compose.preview)
+
+    // VLCj: el único reproductor JVM con soporte real de HLS/DASH sin browser engine.
+    // vlcj-natives incluye los bindings nativos precompilados para Windows/macOS/Linux.
+    implementation(libs.vlcj.core)
+    implementation(libs.vlcj.natives)
 }
 
 compose.desktop {

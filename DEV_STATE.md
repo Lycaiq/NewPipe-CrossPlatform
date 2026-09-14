@@ -1,0 +1,101 @@
+# Estado del Port Windows — NewPipe
+
+Rama: `dev-windows`  
+Stack base: Kotlin Multiplatform + Compose Multiplatform (Desktop/JVM)
+
+---
+
+## Arquitectura General
+
+El proyecto ya tiene el scaffolding de desktop con el módulo `desktopApp` (JVM). La pared real 
+es que **no hay reproductor de video**: Compose Desktop no lo incluye. El core (extractor, 
+parseo de datos, settings, DI) ya corre en JVM limpiamente. Solo hay que construir encima.
+
+```
+desktopApp/Main.kt
+    └── App() [shared/commonMain]
+          ├── KoinApp (DI)
+          ├── AppTheme
+          └── NavDisplay
+                ├── AboutScreen
+                └── SettingsHomeScreen
+
+shared/jvmMain  ← implementaciones JVM de las interfaces de platform
+    ├── JVMBuildInfo
+    ├── JVMResourceHandler
+    ├── JVMShareHandler
+    └── JVMSettingsModule (Java Preferences)
+```
+
+**Decisiones técnicas clave:**
+- Reproductor de video → `uk.co.caprica:vlcj` (4.x). Embebido en Compose via `SwingPanel`.
+  VLC es el único reproductor maduro con soporte real de HLS/DASH en JVM sin browser engine.
+- Packaging Windows → Gradle task `packageMsi` (ya configurado en `desktopApp/build.gradle.kts`).
+  Usa `jpackage` + JDK bundleado. El usuario final no necesita Java.
+- Builds Windows CI → GitHub Actions con `windows-latest`.
+
+---
+
+## Roadmap por Fases
+
+### [x] FASE 0 — Setup, análisis y documentación de arquitectura
+- [x] Crear este `DEV_STATE.md` con roadmap y decisiones técnicas
+- [x] Actualizar `.gitignore` con entradas específicas de Windows
+- [x] Documentar en `docs/WINDOWS_STRATEGY.md` (ya existía, se mantiene)
+
+---
+
+### [x] FASE 1 — Integración del reproductor VLC (PoC funcional)
+**Objetivo:** Que un video se pueda reproducir en la ventana desktop.
+- [x] Agregar dependencia `vlcj` 4.8.3 a `desktopApp/build.gradle.kts` y `libs.versions.toml`
+- [x] Crear interfaz `VideoPlayer` en `shared/commonMain` (abstracción multiplataforma)
+- [x] Crear `VideoPlayerState` + `PlaybackStatus` en `shared/commonMain`
+- [x] Crear `JVMVideoPlayer.kt` en `shared/jvmMain` con listeners de VLCj
+- [x] Crear `PlayerModule.kt` en `shared/commonMain` para DI con Koin
+- [x] Crear `VideoSurface.kt` en `desktopApp`: composable que embebe AWT de VLC via SwingPanel
+- [x] Crear `VideoPlayerStateTest.kt` en `jvmTest`: tests de estado puro
+- [x] Crear `JVMVideoPlayerIntegrationTest.kt` en `jvmTest`: tests de integración (VLC-@Ignore en CI)
+- [x] Actualizar `.gitignore` con artefactos Windows (.msi, .exe, vlc-natives)
+
+---
+
+### [ ] FASE 2 — Pantalla principal y navegación a player
+**Objetivo:** El usuario puede buscar y seleccionar un video que abre el player.
+- [ ] Crear `HomeScreen` en `shared/commonMain` con campo de búsqueda
+- [ ] Conectar con extractor de NewPipe (módulo `:app` tiene implementación)
+- [ ] Agregar `Destination.Home` y `Destination.Player(url)` al nav graph
+- [ ] Pasar URL del stream al `VideoPlayer` al navegar al player
+- [ ] Tests: navegación entre pantallas, que URL llegue correctamente al player
+
+---
+
+### [ ] FASE 3 — Controles de reproducción y UI del player
+**Objetivo:** Controles de video funcionales (play/pause, seek, volumen, fullscreen).
+- [ ] `PlayerScreen` con barra de controles en Compose
+- [ ] ViewModel del player con StateFlow para estado (posición, duración, buffering)
+- [ ] Atajos de teclado: Espacio=play/pause, F=fullscreen, flechas=seek
+- [ ] Tests de estrés: múltiples ciclos play/stop, seek agresivo
+
+---
+
+### [ ] FASE 4 — Descarga de streams
+**Objetivo:** Descargar audio/video a disco local.
+- [ ] `DownloadManager` usando coroutines: cola de descargas con prioridad
+- [ ] UI: pantalla de descargas activas con progreso
+- [ ] Tests de estrés: 10 descargas concurrentes, cancelación en mitad de descarga
+
+---
+
+### [ ] FASE 5 — Empaquetado y distribución Windows
+**Objetivo:** Generar `.msi` y `.exe` instalables y funcionales.
+- [ ] Configurar `jpackage` en `desktopApp/build.gradle.kts` con icono y metadata
+- [ ] GitHub Actions: workflow en `windows-latest` que genera el artefacto
+- [ ] Probar que el `.msi` instala y arranca sin JDK en el sistema
+- [ ] Documentar el proceso de build en `README.md`
+
+---
+
+## Última actualización
+- Fase completada: **FASE 1** ✅
+- Fase actual: **FASE 2** (pendiente)
+- Archivos nuevos: `VideoPlayer.kt`, `VideoPlayerState.kt`, `PlayerModule.kt` (commonMain), `JVMVideoPlayer.kt` (jvmMain), `VideoSurface.kt` (desktopApp), tests en `jvmTest`
