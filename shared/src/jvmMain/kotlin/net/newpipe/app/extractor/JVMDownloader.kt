@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit
  */
 class JVMDownloader private constructor() : Downloader() {
 
-    private val client: OkHttpClient = OkHttpClient.Builder()
+    val client: OkHttpClient = OkHttpClient.Builder()
         .readTimeout(30, TimeUnit.SECONDS)
         .connectTimeout(15, TimeUnit.SECONDS)
         .build()

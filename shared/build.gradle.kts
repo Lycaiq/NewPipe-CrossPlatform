@@ -113,6 +113,7 @@ kotlin {
 
                 implementation(libs.russhwolf.settings.core)
                 implementation(libs.touchlab.kermit)
+                implementation(libs.coil.compose)
             }
         }
         commonTest.dependencies {
@@ -166,6 +167,7 @@ kotlin {
                 implementation(libs.newpipe.extractor)
                 implementation(libs.squareup.okhttp)
                 implementation("uk.co.caprica:vlcj:4.8.2")
+                implementation(libs.coil.network.okhttp)
             }
         }
     }

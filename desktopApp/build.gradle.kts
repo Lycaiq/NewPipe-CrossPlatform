@@ -27,6 +27,10 @@ dependencies {
     // Extractor de NewPipe + OkHttp como downloader
     implementation(libs.newpipe.extractor)
     implementation(libs.squareup.okhttp)
+    
+    // Coil para carga de imágenes
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
 }
 
 compose.desktop {

@@ -86,24 +86,33 @@ shared/jvmMain  ← implementaciones JVM de las interfaces de platform
 
 ---
 
-### [ ] FASE 4 — Descarga de streams
+### [x] FASE 4 — Descarga de streams
 **Objetivo:** Descargar audio/video a disco local.
-- [ ] `DownloadManager` usando coroutines: cola de descargas con prioridad
-- [ ] UI: pantalla de descargas activas con progreso
-- [ ] Tests de estrés: 10 descargas concurrentes, cancelación en mitad de descarga
+- [x] `DownloadManager` usando coroutines: cola de descargas con prioridad
+- [x] UI: pantalla de descargas activas con progreso
+- [x] Tests de estrés: 10 descargas concurrentes, cancelación en mitad de descarga
 
 ---
 
-### [ ] FASE 5 — Empaquetado y distribución Windows
+### [x] FASE 5 — Refinamiento de Interfaz (Desktop Grid) y Thumbnails
+**Objetivo:** Interfaz adaptativa y carga asíncrona de miniaturas.
+- [x] Conectar Coil 3 para carga de imágenes en `commonMain`.
+- [x] Configurar el `ImageLoader` en JVM usando `OkHttpNetworkFetcher` y el `JVMDownloader`.
+- [x] Cambiar el layout lineal a `LazyVerticalGrid` en `HomeScreen`.
+- [x] Mostrar previews (`AsyncImage`) del extractor de NewPipe en las tarjetas.
+
+---
+
+### [ ] FASE 6 — Empaquetado y distribución Windows
 **Objetivo:** Generar `.msi` y `.exe` instalables y funcionales.
-- [ ] Configurar `jpackage` en `desktopApp/build.gradle.kts` con icono y metadata
-- [ ] GitHub Actions: workflow en `windows-latest` que genera el artefacto
+- [x] Configurar `jpackage` en `desktopApp/build.gradle.kts` con metadata
+- [x] GitHub Actions: workflow en `windows-latest` que genera el artefacto
 - [ ] Probar que el `.msi` instala y arranca sin JDK en el sistema
 - [ ] Documentar el proceso de build en `README.md`
 
 ---
 
 ## Última actualización
-- Fase completada: **FASE 3** ✅
-- Fase actual: **FASE 4** (pendiente)
-- Archivos nuevos/modificados: `PlayerViewModel`, `PlayerViewModelTest`, `PlayerScreen` (controles + atajos de teclado), `JVMVideoPlayer` (refactor a StateFlow), `FullscreenController`, assets SVG (play, pause, fullscreen, volumen).
+- Fase completada: **FASE 5** ✅
+- Fase actual: **FASE 6** (pendiente)
+- Archivos nuevos/modificados: `HomeScreen` (grid ui), dependencias de Coil, `Main.kt` (ImageLoader).

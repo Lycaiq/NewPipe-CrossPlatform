@@ -11,6 +11,9 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
+import coil3.ImageLoader
+import coil3.compose.setSingletonImageLoaderFactory
+import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import net.newpipe.app.extractor.JVMDownloader
 import net.newpipe.app.screen.player.FullscreenController
 import net.newpipe.app.screen.player.LocalFullscreenController
@@ -25,6 +28,14 @@ fun main() = application {
     // El extractor necesita un downloader inicializado antes del primer uso.
     // Lo hacemos aquí y no en un ViewModel para que sea síncrono y garantizado.
     NewPipe.init(JVMDownloader.getInstance())
+
+    setSingletonImageLoaderFactory { context ->
+        ImageLoader.Builder(context)
+            .components {
+                add(OkHttpNetworkFetcherFactory(callFactory = { JVMDownloader.getInstance().client }))
+            }
+            .build()
+    }
 
     val windowState = rememberWindowState()
     

@@ -5,22 +5,25 @@
 
 package net.newpipe.app.screen.home
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -32,18 +35,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.compose.AsyncImage
 import net.newpipe.app.navigation.Destination
 import net.newpipe.app.navigation.Navigator
 import net.newpipe.app.search.SearchResultItem
 import net.newpipe.app.viewmodel.search.SearchViewModel
 import newpipe.shared.generated.resources.Res
-import newpipe.shared.generated.resources.ic_search
 import newpipe.shared.generated.resources.ic_cloud_download
 import newpipe.shared.generated.resources.ic_file_download
-
+import newpipe.shared.generated.resources.ic_search
 import newpipe.shared.generated.resources.search
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -145,14 +150,14 @@ fun HomeScreenContent(
                 contentAlignment = Alignment.TopCenter
             ) {
                 when {
-                    isLoading -> CircularProgressIndicator(modifier = Modifier.padding(top = 48.dp))
+                    isLoading && results.isEmpty() -> CircularProgressIndicator(modifier = Modifier.padding(top = 48.dp))
                     error != null && results.isEmpty() -> Text(
                         text = error,
                         modifier = Modifier.padding(top = 48.dp, start = 16.dp, end = 16.dp),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    else -> ResultsList(
+                    else -> ResultsGrid(
                         results = results, 
                         onItemClick = onItemClick,
                         onDownloadClick = onDownloadClick
@@ -164,74 +169,104 @@ fun HomeScreenContent(
 }
 
 @Composable
-private fun ResultsList(
+private fun ResultsGrid(
     results: List<SearchResultItem>,
     onItemClick: (SearchResultItem) -> Unit,
     onDownloadClick: (SearchResultItem) -> Unit
 ) {
-    LazyColumn(
-        contentPadding = PaddingValues(vertical = 8.dp)
+    LazyVerticalGrid(
+        columns = GridCells.Adaptive(minSize = 280.dp),
+        contentPadding = PaddingValues(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp),
+        modifier = Modifier.fillMaxSize()
     ) {
         items(items = results, key = { it.streamUrl }) { item ->
-            ResultItem(
+            VideoGridCard(
                 item = item, 
                 onClick = { onItemClick(item) },
                 onDownload = { onDownloadClick(item) }
             )
-            HorizontalDivider()
         }
     }
 }
 
 @Composable
-private fun ResultItem(
+private fun VideoGridCard(
     item: SearchResultItem,
     onClick: () -> Unit,
     onDownload: () -> Unit
 ) {
     Surface(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        color = Color.Transparent
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        Column(
+            modifier = Modifier.fillMaxWidth()
         ) {
-            // Duración badge
-            Surface(
-                color = MaterialTheme.colorScheme.primaryContainer,
-                shape = MaterialTheme.shapes.small
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(16f / 9f)
+                    .background(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.shapes.medium)
             ) {
-                Text(
-                    text = item.duration,
-                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                    style = MaterialTheme.typography.labelSmall
+                AsyncImage(
+                    model = item.thumbnailUrl,
+                    contentDescription = "Thumbnail for ${item.title}",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
                 )
+                
+                Surface(
+                    color = Color.Black.copy(alpha = 0.7f),
+                    shape = MaterialTheme.shapes.small,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(8.dp)
+                ) {
+                    Text(
+                        text = item.duration,
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                    )
+                }
             }
 
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = item.title,
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(Modifier.size(2.dp))
-                Text(
-                    text = item.uploaderName,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-            
-            androidx.compose.material3.IconButton(onClick = onDownload) {
-                Icon(
-                    painter = painterResource(Res.drawable.ic_cloud_download),
-                    contentDescription = "Descargar"
-                )
+            Spacer(Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Top
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = item.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = item.uploaderName,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                
+                androidx.compose.material3.IconButton(
+                    onClick = onDownload,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_cloud_download),
+                        contentDescription = "Descargar",
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         }
     }
