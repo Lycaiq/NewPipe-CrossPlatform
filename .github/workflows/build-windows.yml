@@ -24,9 +24,9 @@ jobs:
     - name: Build MSI Installer
       run: ./gradlew :desktopApp:packageReleaseMsi --no-daemon
 
-    - name: Upload Windows MSI Artifact
+    - name: Upload Windows Artifacts
       uses: actions/upload-artifact@v4
       with:
         name: NewPipe-Windows-Installer
-        path: desktopApp/build/compose/binaries/main/**/*.msi
+        path: desktopApp/build/compose/binaries/
         if-no-files-found: warn
