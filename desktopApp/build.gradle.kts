@@ -38,6 +38,10 @@ compose.desktop {
             packageName = NEWPIPE_APPLICATION_ID_NEW
             packageVersion = NEWPIPE_VERSION_NAME
         }
+
+        buildTypes.release.proguard {
+            isEnabled.set(false)
+        }
     }
 }
 
