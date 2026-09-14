@@ -5,11 +5,6 @@
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 rootProject.name = "NewPipe"
 
-plugins {
-    // Plugin necesario para que Gradle pueda descargar el JDK 21 automáticamente
-    id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
-}
-
 pluginManagement {
     repositories {
         gradlePluginPortal()
@@ -17,6 +12,12 @@ pluginManagement {
         mavenCentral()
     }
 }
+
+plugins {
+    // Plugin necesario para que Gradle pueda descargar el JDK 21 automáticamente
+    id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
+}
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
