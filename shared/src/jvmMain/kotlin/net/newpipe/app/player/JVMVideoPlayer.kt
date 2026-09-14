@@ -9,7 +9,7 @@ import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
-import org.koin.core.annotation.Singleton
+import org.koin.core.annotation.Factory
 import uk.co.caprica.vlcj.factory.discovery.NativeDiscovery
 import java.awt.Canvas
 import uk.co.caprica.vlcj.player.base.MediaPlayer
@@ -24,7 +24,7 @@ import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer
 /**
  * Implementación de VideoPlayer para JVM usando VLCj.
  */
-@Singleton(binds = [VideoPlayer::class])
+@Factory(binds = [VideoPlayer::class])
 class JVMVideoPlayer : VideoPlayer {
 
     private var factory: MediaPlayerFactory? = null
@@ -34,6 +34,9 @@ class JVMVideoPlayer : VideoPlayer {
 
     private val _state = MutableStateFlow(VideoPlayerState())
     override val state: StateFlow<VideoPlayerState> get() = _state
+
+    private var pendingUrl: String? = null
+    private var isSurfaceAttached = false
 
     init {
         val found = NativeDiscovery().discover()
@@ -47,11 +50,15 @@ class JVMVideoPlayer : VideoPlayer {
             videoSurfaceCanvas = Canvas().apply {
                 background = Color.BLACK
                 // FIX WINDOWS: VLCj lanza "The video surface component must be displayable"
-                // si se intenta atar el Canvas antes de que esté renderizado.
                 addHierarchyListener { e ->
                     if ((e.changeFlags and HierarchyEvent.SHOWING_CHANGED.toLong()) != 0L) {
-                        if (isShowing) {
+                        if (isShowing && !isSurfaceAttached) {
                             mediaPlayer?.videoSurface()?.set(factory!!.videoSurfaces().newVideoSurface(this))
+                            isSurfaceAttached = true
+                            pendingUrl?.let { url ->
+                                pendingUrl = null
+                                mediaPlayer?.media()?.play(url)
+                            }
                         }
                     }
                 }
@@ -121,7 +128,11 @@ class JVMVideoPlayer : VideoPlayer {
                 isBuffering = true
             )
         }
-        p.media().play(url)
+        if (isSurfaceAttached) {
+            p.media().play(url)
+        } else {
+            pendingUrl = url
+        }
     }
 
     override fun pause() {

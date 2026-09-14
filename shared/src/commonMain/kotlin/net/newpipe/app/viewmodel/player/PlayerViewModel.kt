@@ -61,6 +61,6 @@ class PlayerViewModel(private val player: VideoPlayer) : ViewModel() {
 
     override fun onCleared() {
         super.onCleared()
-        player.stop() // Asegurar que paramos si el ViewModel muere
+        player.release() // Destruir el reproductor nativo y la ventana
     }
 }
