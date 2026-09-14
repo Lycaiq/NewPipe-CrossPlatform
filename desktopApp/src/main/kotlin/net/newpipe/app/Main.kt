@@ -5,9 +5,15 @@
 
 package net.newpipe.app
 
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
+import androidx.compose.ui.window.rememberWindowState
 import net.newpipe.app.extractor.JVMDownloader
+import net.newpipe.app.screen.player.FullscreenController
+import net.newpipe.app.screen.player.LocalFullscreenController
 import org.schabi.newpipe.extractor.NewPipe
 
 /**
@@ -20,7 +26,30 @@ fun main() = application {
     // Lo hacemos aquí y no en un ViewModel para que sea síncrono y garantizado.
     NewPipe.init(JVMDownloader.getInstance())
 
-    Window(onCloseRequest = ::exitApplication, title = "NewPipe") {
-        App(onCloseRequest = ::exitApplication)
+    val windowState = rememberWindowState()
+    
+    val fullscreenController = remember {
+        object : FullscreenController {
+            override val isFullscreen: Boolean 
+                get() = windowState.placement == WindowPlacement.Fullscreen
+            
+            override fun toggleFullscreen() {
+                windowState.placement = if (windowState.placement == WindowPlacement.Fullscreen) {
+                    WindowPlacement.Floating
+                } else {
+                    WindowPlacement.Fullscreen
+                }
+            }
+        }
+    }
+
+    Window(
+        onCloseRequest = ::exitApplication, 
+        title = "NewPipe",
+        state = windowState
+    ) {
+        CompositionLocalProvider(LocalFullscreenController provides fullscreenController) {
+            App(onCloseRequest = ::exitApplication)
+        }
     }
 }

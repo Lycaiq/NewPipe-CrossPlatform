@@ -6,6 +6,9 @@
 package net.newpipe.app.player
 
 import co.touchlab.kermit.Logger
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import org.koin.core.annotation.Singleton
 import uk.co.caprica.vlcj.factory.discovery.NativeDiscovery
 import uk.co.caprica.vlcj.player.base.MediaPlayer
@@ -27,8 +30,8 @@ class JVMVideoPlayer : VideoPlayer {
     private var mediaPlayerComponent: EmbeddedMediaPlayerComponent? = null
     private val player: MediaPlayer? get() = mediaPlayerComponent?.mediaPlayer()
 
-    private val _state = MutableVideoPlayerState()
-    override val state: VideoPlayerState get() = _state.snapshot()
+    private val _state = MutableStateFlow(VideoPlayerState())
+    override val state: StateFlow<VideoPlayerState> get() = _state
 
     init {
         // NativeDiscovery busca libvlc en los paths estándar del SO.
@@ -36,7 +39,7 @@ class JVMVideoPlayer : VideoPlayer {
         val found = NativeDiscovery().discover()
         if (!found) {
             Logger.e("JVMVideoPlayer") { "VLC no encontrado en el sistema. El reproductor no funcionará." }
-            _state.errorMessage = "VLC no instalado o no encontrado en PATH"
+            _state.update { it.copy(errorMessage = "VLC no instalado o no encontrado en PATH") }
         } else {
             mediaPlayerComponent = EmbeddedMediaPlayerComponent()
             setupEventListeners()
@@ -47,44 +50,63 @@ class JVMVideoPlayer : VideoPlayer {
         player?.events()?.addMediaPlayerEventListener(object : MediaPlayerEventAdapter() {
 
             override fun playing(mediaPlayer: MediaPlayer) {
-                _state.playbackStatus = PlaybackStatus.PLAYING
-                _state.isBuffering = false
-                _state.errorMessage = null
+                _state.update { 
+                    it.copy(
+                        playbackStatus = PlaybackStatus.PLAYING,
+                        isBuffering = false,
+                        errorMessage = null
+                    )
+                }
             }
 
             override fun paused(mediaPlayer: MediaPlayer) {
-                _state.playbackStatus = PlaybackStatus.PAUSED
+                _state.update { it.copy(playbackStatus = PlaybackStatus.PAUSED) }
             }
 
             override fun stopped(mediaPlayer: MediaPlayer) {
-                _state.playbackStatus = PlaybackStatus.STOPPED
-                _state.currentPositionMs = 0L
+                _state.update { 
+                    it.copy(
+                        playbackStatus = PlaybackStatus.STOPPED,
+                        currentPositionMs = 0L
+                    )
+                }
             }
 
             override fun buffering(mediaPlayer: MediaPlayer, newCache: Float) {
                 // Solo marcamos buffering si no está al 100% aún
-                _state.isBuffering = newCache < 100f
+                _state.update { it.copy(isBuffering = newCache < 100f) }
             }
 
             override fun timeChanged(mediaPlayer: MediaPlayer, newTime: Long) {
-                _state.currentPositionMs = newTime
-                // Aprovechamos el tick de tiempo para actualizar la duración
-                // sin necesidad de un timer separado
-                _state.durationMs = mediaPlayer.status().length()
+                val length = mediaPlayer.status().length()
+                _state.update { 
+                    it.copy(
+                        currentPositionMs = newTime,
+                        durationMs = length
+                    )
+                }
             }
 
             override fun error(mediaPlayer: MediaPlayer) {
                 Logger.e("JVMVideoPlayer") { "Error de reproducción en: ${mediaPlayer.media()?.info()?.mrl()}" }
-                _state.playbackStatus = PlaybackStatus.ERROR
-                _state.errorMessage = "Error al reproducir el medio"
+                _state.update { 
+                    it.copy(
+                        playbackStatus = PlaybackStatus.ERROR,
+                        errorMessage = "Error al reproducir el medio"
+                    )
+                }
             }
         })
     }
 
     override fun play(url: String) {
         val p = player ?: return logNoPlayer("play")
-        _state.playbackStatus = PlaybackStatus.LOADING
-        _state.isBuffering = true
+        _state.update { 
+            it.copy(
+                playbackStatus = PlaybackStatus.LOADING,
+                isBuffering = true
+            )
+        }
         p.media().play(url)
     }
 
@@ -101,7 +123,7 @@ class JVMVideoPlayer : VideoPlayer {
     override fun stop() {
         val p = player ?: return logNoPlayer("stop")
         p.controls().stop()
-        _state.playbackStatus = PlaybackStatus.STOPPED
+        _state.update { it.copy(playbackStatus = PlaybackStatus.STOPPED) }
     }
 
     override fun seekTo(positionMs: Long) {
@@ -116,13 +138,13 @@ class JVMVideoPlayer : VideoPlayer {
         val p = player ?: return logNoPlayer("setVolume")
         val clamped = volume.coerceIn(0, 100)
         p.audio().setVolume(clamped)
-        _state.volume = clamped
+        _state.update { it.copy(volume = clamped) }
     }
 
     override fun release() {
         mediaPlayerComponent?.release()
         mediaPlayerComponent = null
-        _state.playbackStatus = PlaybackStatus.IDLE
+        _state.update { it.copy(playbackStatus = PlaybackStatus.IDLE) }
     }
 
     /** Devuelve el componente AWT/Swing para embeber en SwingPanel de Compose */
@@ -130,26 +152,4 @@ class JVMVideoPlayer : VideoPlayer {
 
     private fun logNoPlayer(action: String) =
         Logger.w("JVMVideoPlayer") { "Acción '$action' ignorada: player no inicializado (¿VLC instalado?)" }
-}
-
-/**
- * Holder mutable del estado interno del player. Solo JVMVideoPlayer lo toca.
- * La UI solo ve VideoPlayerState (inmutable) via snapshot().
- */
-internal class MutableVideoPlayerState {
-    var playbackStatus: PlaybackStatus = PlaybackStatus.IDLE
-    var currentPositionMs: Long = 0L
-    var durationMs: Long = 0L
-    var volume: Int = 100
-    var isBuffering: Boolean = false
-    var errorMessage: String? = null
-
-    fun snapshot() = VideoPlayerState(
-        playbackStatus = playbackStatus,
-        currentPositionMs = currentPositionMs,
-        durationMs = durationMs,
-        volume = volume,
-        isBuffering = isBuffering,
-        errorMessage = errorMessage
-    )
 }

@@ -5,14 +5,16 @@
 
 package net.newpipe.app.player
 
+import kotlinx.coroutines.flow.StateFlow
+
 /**
  * Contrato que tiene que cumplir cualquier reproductor en cualquier plataforma.
  * Cada target (JVM, Android, iOS) provee su propia implementación.
  */
 interface VideoPlayer {
 
-    /** Estado observable del reproductor */
-    val state: VideoPlayerState
+    /** Estado observable del reproductor para Compose */
+    val state: StateFlow<VideoPlayerState>
 
     /**
      * Carga y arranca la reproducción de una URL.

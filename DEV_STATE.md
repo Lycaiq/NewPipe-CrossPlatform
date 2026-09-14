@@ -77,12 +77,12 @@ shared/jvmMain  ← implementaciones JVM de las interfaces de platform
 
 ---
 
-### [ ] FASE 3 — Controles de reproducción y UI del player
+### [x] FASE 3 — Controles de reproducción y UI del player
 **Objetivo:** Controles de video funcionales (play/pause, seek, volumen, fullscreen).
-- [ ] `PlayerScreen` con barra de controles en Compose
-- [ ] ViewModel del player con StateFlow para estado (posición, duración, buffering)
-- [ ] Atajos de teclado: Espacio=play/pause, F=fullscreen, flechas=seek
-- [ ] Tests de estrés: múltiples ciclos play/stop, seek agresivo
+- [x] `PlayerScreen` con barra de controles en Compose
+- [x] ViewModel del player con StateFlow para estado (posición, duración, buffering)
+- [x] Atajos de teclado: Espacio=play/pause, F=fullscreen, flechas=seek
+- [x] Tests de estrés: múltiples ciclos play/stop, seek agresivo
 
 ---
 
@@ -104,6 +104,6 @@ shared/jvmMain  ← implementaciones JVM de las interfaces de platform
 ---
 
 ## Última actualización
-- Fase completada: **FASE 2** ✅
-- Fase actual: **FASE 3** (pendiente)
-- Archivos nuevos: `SearchResultItem`, `SearchRepository`, `SearchModule`, `SearchViewModel`, `HomeScreen`, `PlayerScreen` (commonMain) | `JVMSearchRepository`, `JVMDownloader`, `PlayerSurface` (jvmMain) | stubs Android/iOS
+- Fase completada: **FASE 3** ✅
+- Fase actual: **FASE 4** (pendiente)
+- Archivos nuevos/modificados: `PlayerViewModel`, `PlayerViewModelTest`, `PlayerScreen` (controles + atajos de teclado), `JVMVideoPlayer` (refactor a StateFlow), `FullscreenController`, assets SVG (play, pause, fullscreen, volumen).
