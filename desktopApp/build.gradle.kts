@@ -23,6 +23,10 @@ dependencies {
     // vlcj-natives incluye los bindings nativos precompilados para Windows/macOS/Linux.
     implementation(libs.vlcj.core)
     implementation(libs.vlcj.natives)
+
+    // Extractor de NewPipe + OkHttp como downloader
+    implementation(libs.newpipe.extractor)
+    implementation(libs.squareup.okhttp)
 }
 
 compose.desktop {

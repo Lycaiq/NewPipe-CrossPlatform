@@ -22,7 +22,7 @@ import org.koin.plugin.module.dsl.koinConfiguration
  */
 @Composable
 fun App(
-    startDestination: Destination = Destination.About,
+    startDestination: Destination = Destination.Home,
     onCloseRequest: () -> Unit,
     withKoin: @Composable () -> Unit = {}
 ) {

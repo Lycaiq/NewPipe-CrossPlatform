@@ -16,8 +16,18 @@ import net.newpipe.app.model.License
 sealed interface Destination : NavKey {
 
     @Serializable
+    data object Home : Destination
+
+    @Serializable
     data object Settings : Destination
 
     @Serializable
     data object About : Destination
+
+    /**
+     * Player — lleva la URL del stream ya resuelta, lista para pasársela a VLC.
+     * Usamos un data class y no data object porque necesitamos pasar la URL.
+     */
+    @Serializable
+    data class Player(val streamUrl: String, val title: String = "") : Destination
 }

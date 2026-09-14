@@ -59,13 +59,21 @@ shared/jvmMain  ← implementaciones JVM de las interfaces de platform
 
 ---
 
-### [ ] FASE 2 — Pantalla principal y navegación a player
+### [x] FASE 2 — Pantalla principal y navegación a player
 **Objetivo:** El usuario puede buscar y seleccionar un video que abre el player.
-- [ ] Crear `HomeScreen` en `shared/commonMain` con campo de búsqueda
-- [ ] Conectar con extractor de NewPipe (módulo `:app` tiene implementación)
-- [ ] Agregar `Destination.Home` y `Destination.Player(url)` al nav graph
-- [ ] Pasar URL del stream al `VideoPlayer` al navegar al player
-- [ ] Tests: navegación entre pantallas, que URL llegue correctamente al player
+- [x] `SearchResultItem` modelo de datos limpio (commonMain)
+- [x] `SearchRepository` interfaz multiplataforma (commonMain)
+- [x] `JVMSearchRepository` con NewPipeExtractor en `Dispatchers.IO` (jvmMain)
+- [x] `JVMDownloader` — OkHttp puro para el extractor sin deps de Android (jvmMain)
+- [x] `SearchModule` Koin para DI automático (commonMain)
+- [x] `SearchViewModel` con debounce 500ms, StateFlow y resolución de stream (commonMain)
+- [x] `Destination.Home` y `Destination.Player(url, title)` agregados al nav graph
+- [x] `HomeScreen` con SearchBar + LazyColumn de resultados (commonMain)
+- [x] `PlayerScreen` con `expect PlayerSurface` + `actual` en JVM/Android/iOS (commonMain + targets)
+- [x] `App.kt` — startDestination cambiado a `Home`
+- [x] `Main.kt` — `NewPipe.init(JVMDownloader)` al arrancar
+- [x] `SearchResultItemTest` (commonTest), `SearchViewModelTest` (commonTest)
+- [x] `kotlinx-coroutines-test` agregado a commonTest
 
 ---
 
@@ -96,6 +104,6 @@ shared/jvmMain  ← implementaciones JVM de las interfaces de platform
 ---
 
 ## Última actualización
-- Fase completada: **FASE 1** ✅
-- Fase actual: **FASE 2** (pendiente)
-- Archivos nuevos: `VideoPlayer.kt`, `VideoPlayerState.kt`, `PlayerModule.kt` (commonMain), `JVMVideoPlayer.kt` (jvmMain), `VideoSurface.kt` (desktopApp), tests en `jvmTest`
+- Fase completada: **FASE 2** ✅
+- Fase actual: **FASE 3** (pendiente)
+- Archivos nuevos: `SearchResultItem`, `SearchRepository`, `SearchModule`, `SearchViewModel`, `HomeScreen`, `PlayerScreen` (commonMain) | `JVMSearchRepository`, `JVMDownloader`, `PlayerSurface` (jvmMain) | stubs Android/iOS

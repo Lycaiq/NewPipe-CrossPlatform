@@ -119,6 +119,7 @@ kotlin {
             implementation(libs.kotlin.test.core)
             implementation(libs.jetbrains.compose.test.ui)
             implementation(libs.russhwolf.settings.test)
+            implementation(libs.kotlinx.coroutines.test)
         }
         androidMain.dependencies {
             implementation(libs.jetbrains.compose.preview)
