@@ -41,6 +41,12 @@ compose.desktop {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = NEWPIPE_APPLICATION_ID_NEW
             packageVersion = NEWPIPE_VERSION_NAME
+
+            windows {
+                menuGroup = "NewPipe"
+                dirChooser = true
+                shortcut = true
+            }
         }
 
         buildTypes.release.proguard {
