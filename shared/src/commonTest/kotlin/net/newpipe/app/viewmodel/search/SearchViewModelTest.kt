@@ -43,7 +43,7 @@ class SearchViewModelTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         fakeRepo = FakeSearchRepository()
-        viewModel = SearchViewModel(fakeRepo, FakeDownloadManager())
+        viewModel = SearchViewModel(fakeRepo, FakeHistoryRepository(), FakeSubscriptionRepository(), FakeDownloadManager())
     }
 
     @AfterTest
@@ -54,13 +54,13 @@ class SearchViewModelTest {
     @Test
     fun `estado inicial correcto`() {
         assertEquals("", viewModel.query.value)
-        assertTrue(viewModel.results.value.isEmpty())
+        assertTrue(viewModel.results.value.isEmpty()) // empty feed for now in fake
         assertFalse(viewModel.isLoading.value)
         assertNull(viewModel.error.value)
     }
 
     @Test
-    fun `query con menos de 2 chars no dispara busqueda`() = runTest {
+    fun `query con menos de 2 chars carga feed`() = runTest {
         viewModel.query.value = "a"
         testDispatcher.scheduler.advanceTimeBy(600)  // más que el debounce de 500ms
         assertFalse(fakeRepo.searchCalled)
@@ -69,7 +69,7 @@ class SearchViewModelTest {
     @Test
     fun `resolveAndPlay llama al repo y dispara callback con url`() = runTest {
         val item = fakeItem()
-        fakeRepo.resolveResult = "https://stream.directo.com/video.mp4"
+        fakeRepo.resolveResult = net.newpipe.app.search.StreamDetails("https://stream.directo.com/video.mp4", emptyList())
 
         var receivedUrl: String? = null
         viewModel.resolveAndPlay(item) { url -> receivedUrl = url }
@@ -118,14 +118,30 @@ class SearchViewModelTest {
 class FakeSearchRepository : SearchRepository {
     var searchCalled = false
     var searchResults: List<SearchResultItem> = emptyList()
-    var resolveResult: String? = null
+    var resolveResult: net.newpipe.app.search.StreamDetails? = null
 
     override suspend fun search(query: String): List<SearchResultItem> {
         searchCalled = true
         return searchResults
     }
 
-    override suspend fun resolveStreamUrl(pageUrl: String): String? = resolveResult
+    override suspend fun resolveStreamDetails(pageUrl: String): net.newpipe.app.search.StreamDetails? = resolveResult
+    override suspend fun getChannelVideos(channelUrl: String): List<SearchResultItem> = emptyList()
+    override suspend fun getTrending(): List<SearchResultItem> = emptyList()
+}
+
+class FakeHistoryRepository : net.newpipe.app.history.HistoryRepository {
+    override val history: kotlinx.coroutines.flow.StateFlow<List<net.newpipe.app.history.HistoryItem>> = kotlinx.coroutines.flow.MutableStateFlow(emptyList())
+    override fun addToHistory(item: net.newpipe.app.history.HistoryItem) {}
+    override fun clearHistory() {}
+    override fun removeHistoryItem(streamUrl: String) {}
+}
+
+class FakeSubscriptionRepository : net.newpipe.app.subscription.SubscriptionRepository {
+    override val subscriptions: kotlinx.coroutines.flow.StateFlow<List<net.newpipe.app.subscription.SubscriptionItem>> = kotlinx.coroutines.flow.MutableStateFlow(emptyList())
+    override fun addSubscription(item: net.newpipe.app.subscription.SubscriptionItem) {}
+    override fun removeSubscription(url: String) {}
+    override fun isSubscribed(url: String): Boolean = false
 }
 
 class FakeDownloadManager : net.newpipe.app.download.DownloadManager {

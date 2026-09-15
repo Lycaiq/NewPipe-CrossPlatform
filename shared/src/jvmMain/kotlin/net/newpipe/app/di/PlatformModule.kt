@@ -15,4 +15,9 @@ actual val platformModule: Module = module {
     single<SearchRepository> { JVMSearchRepository() }
     single<DownloadManager> { JVMDownloadManager(getOrNull() ?: okhttp3.OkHttpClient()) }
     factory<VideoPlayer> { JVMVideoPlayer() }
+    
+    // Fallback manual injection for repositories missed by KSP/K2 plugin on Desktop
+    single<net.newpipe.app.history.HistoryRepository> { net.newpipe.app.history.SettingsHistoryRepository(get()) }
+    single<net.newpipe.app.bookmark.BookmarkRepository> { net.newpipe.app.bookmark.SettingsBookmarkRepository(get()) }
+    single<net.newpipe.app.subscription.SubscriptionRepository> { net.newpipe.app.subscription.SettingsSubscriptionRepository(get()) }
 }

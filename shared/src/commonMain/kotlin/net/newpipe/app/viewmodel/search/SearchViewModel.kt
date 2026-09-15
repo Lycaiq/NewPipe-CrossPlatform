@@ -19,6 +19,8 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import net.newpipe.app.search.SearchRepository
 import net.newpipe.app.search.SearchResultItem
+import net.newpipe.app.history.HistoryRepository
+import net.newpipe.app.subscription.SubscriptionRepository
 import org.koin.core.annotation.KoinViewModel
 
 import net.newpipe.app.download.DownloadManager
@@ -27,6 +29,8 @@ import net.newpipe.app.download.DownloadManager
 @KoinViewModel
 class SearchViewModel(
     private val repo: SearchRepository,
+    private val historyRepo: HistoryRepository,
+    private val subscriptionRepo: SubscriptionRepository,
     private val downloadManager: DownloadManager
 ) : ViewModel() {
 
@@ -45,9 +49,62 @@ class SearchViewModel(
         query
             .debounce(500)
             .distinctUntilChanged()
-            .filter { it.length >= 2 }  // mínimo 2 caracteres para no spamear el extractor
-            .onEach { performSearch(it) }
+            .onEach { q ->
+                if (q.trim().length >= 2) {
+                    performSearch(q)
+                } else if (q.isEmpty()) {
+                    loadFeed()
+                } else {
+                    _results.value = emptyList()
+                }
+            }
             .launchIn(viewModelScope)
+            
+        // Cargar el feed inicial
+        loadFeed()
+    }
+
+    private fun loadFeed() {
+        viewModelScope.launch {
+            if (_isLoading.value) return@launch
+            _isLoading.value = true
+            _error.value = null
+            try {
+                // 1. Priorizar videos de un canal suscrito aleatorio (si hay)
+                val subs = subscriptionRepo.subscriptions.value
+                if (subs.isNotEmpty()) {
+                    val randomSub = subs.random()
+                    val channelVideos = repo.getChannelVideos(randomSub.url)
+                    if (channelVideos.isNotEmpty()) {
+                        _results.value = channelVideos
+                        return@launch
+                    }
+                }
+
+                // 2. Si no hay suscripciones o fallan, intentar con relacionados del historial
+                val history = historyRepo.history.value
+                if (history.isNotEmpty()) {
+                    val lastViewedUrl = history.first().streamUrl
+                    val details = repo.resolveStreamDetails(lastViewedUrl)
+                    val related = details?.relatedItems ?: emptyList()
+                    if (related.isNotEmpty()) {
+                        _results.value = related
+                        return@launch
+                    }
+                }
+
+                // 3. Fallback a tendencias generales
+                _results.value = repo.getTrending()
+                if (_results.value.isEmpty()) {
+                    _error.value = "No se pudieron cargar recomendaciones."
+                }
+            } catch (e: Exception) {
+                Logger.e("SearchViewModel", e) { "Error al cargar el feed" }
+                _error.value = "Error al cargar sugerencias"
+            } finally {
+                _isLoading.value = false
+            }
+        }
     }
 
     private fun performSearch(q: String) {

@@ -33,4 +33,10 @@ interface SearchRepository {
      * Bloquea el hilo.
      */
     suspend fun getChannelVideos(channelUrl: String): List<SearchResultItem>
+
+    /**
+     * Devuelve la lista de videos en tendencias de la plataforma.
+     * Bloquea el hilo.
+     */
+    suspend fun getTrending(): List<SearchResultItem>
 }

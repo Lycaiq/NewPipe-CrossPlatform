@@ -135,6 +135,32 @@ class JVMSearchRepository : SearchRepository {
             }
         }
 
+    override suspend fun getTrending(): List<SearchResultItem> =
+        withContext(Dispatchers.IO) {
+            try {
+                // For YouTube, KioskInfo expects the URL, not the ID.
+                val kioskInfo = org.schabi.newpipe.extractor.kiosk.KioskInfo.getInfo(ServiceList.YouTube, "https://www.youtube.com/feed/trending")
+                
+                kioskInfo.relatedItems.mapNotNull { item ->
+                    if (item !is org.schabi.newpipe.extractor.stream.StreamInfoItem) return@mapNotNull null
+
+                    SearchResultItem(
+                        title = item.name ?: return@mapNotNull null,
+                        uploaderName = item.uploaderName ?: "",
+                        uploaderUrl = item.uploaderUrl,
+                        uploadDateMs = item.uploadDate?.offsetDateTime()?.toEpochSecond()?.times(1000),
+                        duration = item.duration.formatDuration(),
+                        thumbnailUrl = item.thumbnails.firstOrNull()?.url,
+                        streamUrl = item.url ?: return@mapNotNull null,
+                        viewCount = item.viewCount
+                    )
+                }
+            } catch (e: Exception) {
+                Logger.e("JVMSearchRepository", e) { "Error al obtener videos en tendencias" }
+                emptyList()
+            }
+        }
+
     /** Convierte duración en segundos a "H:MM:SS" o "MM:SS". -1 = LIVE */
     private fun Long.formatDuration(): String {
         if (this < 0) return "EN VIVO"
