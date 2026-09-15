@@ -213,6 +213,11 @@
     <string name="clear_cookie_title">Clear reCAPTCHA cookies</string>
     <string name="recaptcha_cookies_cleared">reCAPTCHA cookies have been cleared</string>
     <string name="import_data_summary">Overrides your current history, subscriptions, playlists and (optionally) settings</string>
+    <string name="export_gdrive_title">Export to Google Drive</string>
+    <string name="export_gdrive_summary">Upload your database to Google Drive</string>
+    <string name="import_gdrive_title">Import from Google Drive</string>
+    <string name="import_gdrive_summary">Download and import your database from Google Drive</string>
+
     <string name="export_data_summary">Export history, subscriptions, playlists and settings</string>
     <string name="clear_cookie_summary">Clear cookies that NewPipe stores when you solve a reCAPTCHA</string>
     <string name="clear_views_history_title">Clear watch history</string>

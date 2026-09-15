@@ -100,7 +100,80 @@ public class BackupRestoreSettingsFragment extends BasePreferenceFragment {
             return true;
         });
 
+        final Preference exportGdrivePreference = requirePreference(R.string.export_gdrive_title);
+        exportGdrivePreference.setOnPreferenceClickListener((final Preference p) -> {
+            try {
+                // Export database to a temporary local file first
+                final java.io.File cacheDir = requireContext().getCacheDir();
+                final java.io.File tempFile = new java.io.File(cacheDir, "NewPipeData-" + exportDateFormat.format(new Date()) + ".zip");
+                
+                try (java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newSingleThreadExecutor()) {
+                    executor.submit(org.schabi.newpipe.NewPipeDatabase::checkpoint).get();
+                    final android.content.SharedPreferences preferences = androidx.preference.PreferenceManager
+                            .getDefaultSharedPreferences(requireContext());
+                    
+                    // Create a StoredFileHelper pointing to this temp file
+                    StoredFileHelper tempStoredFile = new StoredFileHelper(requireContext(), android.net.Uri.fromFile(tempFile), ZIP_MIME_TYPE);
+                    manager.exportDatabase(preferences, tempStoredFile);
+                    
+                    // Trigger Google Drive flow
+                    org.schabi.newpipe.settings.export.GoogleDriveBackupManager.INSTANCE.startOAuthDeviceFlow(
+                            requireContext(),
+                            (userCode, url) -> {
+                                new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                                        .setTitle("Google Drive Auth")
+                                        .setMessage("Please go to " + url + " and enter the code: " + userCode)
+                                        .setPositiveButton("OK", null)
+                                        .show();
+                                return kotlin.Unit.INSTANCE;
+                            },
+                            (token) -> {
+                                org.schabi.newpipe.settings.export.GoogleDriveBackupManager.INSTANCE.uploadZipToDrive(requireContext(), token, tempFile);
+                                return kotlin.Unit.INSTANCE;
+                            }
+                    );
+                }
+            } catch (Exception e) {
+                showErrorSnackbar(e, "Exporting database to Google Drive");
+            }
+            return true;
+        });
+
         final Preference resetSettings = requirePreference(R.string.reset_settings);
+        
+        final Preference importGdrivePreference = requirePreference(R.string.import_gdrive_title);
+        importGdrivePreference.setOnPreferenceClickListener((final Preference p) -> {
+            try {
+                final java.io.File cacheDir = requireContext().getCacheDir();
+                final java.io.File tempFile = new java.io.File(cacheDir, "NewPipeData-Import-" + exportDateFormat.format(new Date()) + ".zip");
+                
+                org.schabi.newpipe.settings.export.GoogleDriveBackupManager.INSTANCE.startOAuthDeviceFlow(
+                        requireContext(),
+                        (userCode, url) -> {
+                            new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                                    .setTitle("Google Drive Auth")
+                                    .setMessage("Please go to " + url + " and enter the code: " + userCode)
+                                    .setPositiveButton("OK", null)
+                                    .show();
+                            return kotlin.Unit.INSTANCE;
+                        },
+                        (token) -> {
+                            org.schabi.newpipe.settings.export.GoogleDriveBackupManager.INSTANCE.downloadZipFromDrive(
+                                    requireContext(), token, tempFile, () -> {
+                                        StoredFileHelper tempStoredFile = new StoredFileHelper(requireContext(), android.net.Uri.fromFile(tempFile), ZIP_MIME_TYPE);
+                                        importDatabase(tempStoredFile, android.net.Uri.fromFile(tempFile));
+                                        return kotlin.Unit.INSTANCE;
+                                    }
+                            );
+                            return kotlin.Unit.INSTANCE;
+                        }
+                );
+            } catch (Exception e) {
+                showErrorSnackbar(e, "Importing database from Google Drive");
+            }
+            return true;
+        });
+        
         // Resets all settings by deleting shared preference and restarting the app
         // A dialogue will pop up to confirm if user intends to reset all settings
         resetSettings.setOnPreferenceClickListener(preference -> {
