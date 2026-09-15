@@ -50,10 +50,17 @@ public class BackupRestoreSettingsFragment extends BasePreferenceFragment {
     private ImportExportManager manager;
     private String importExportDataPathKey;
     private final ActivityResultLauncher<Intent> requestImportPathLauncher =
-            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
+            registerForActivityResult(
+                    new ActivityResultContracts.StartActivityForResult(),
                     this::requestImportPathResult);
+
+    private final ActivityResultLauncher<Intent> requestSyncFilePathLauncher =
+            registerForActivityResult(
+                    new ActivityResultContracts.StartActivityForResult(),
+                    this::requestSyncFilePathResult);
     private final ActivityResultLauncher<Intent> requestExportPathLauncher =
-            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
+            registerForActivityResult(
+                    new ActivityResultContracts.StartActivityForResult(),
                     this::requestExportPathResult);
     private SubscriptionsImportExportHelper importExportHelper;
 
@@ -72,6 +79,9 @@ public class BackupRestoreSettingsFragment extends BasePreferenceFragment {
         importExportDataPathKey = getString(R.string.import_export_data_path);
 
         addPreferencesFromResourceRegistry();
+
+
+        setupSyncPreferences();
 
         final Preference importDataPreference = requirePreference(R.string.import_data);
         importDataPreference.setOnPreferenceClickListener((Preference p) -> {
@@ -100,7 +110,44 @@ public class BackupRestoreSettingsFragment extends BasePreferenceFragment {
             return true;
         });
 
+
+        final Preference shareDataPreference = requirePreference(R.string.share_data_title);
+        shareDataPreference.setOnPreferenceClickListener((final Preference p) -> {
+            try {
+                final java.io.File cacheDir = requireContext().getCacheDir();
+                final java.io.File tempFile = new java.io.File(cacheDir,
+                        "NewPipeData-" + exportDateFormat.format(new Date()) + ".zip");
+
+                try (java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newSingleThreadExecutor()) {
+                    executor.submit(org.schabi.newpipe.NewPipeDatabase::checkpoint).get();
+                    final android.content.SharedPreferences preferences = androidx.preference
+                            .PreferenceManager.getDefaultSharedPreferences(requireContext());
+
+                    final StoredFileHelper tempStoredFile = new StoredFileHelper(requireContext(),
+                            android.net.Uri.fromFile(tempFile), ZIP_MIME_TYPE);
+                    manager.exportDatabase(preferences, tempStoredFile);
+
+                    final android.net.Uri uri = androidx.core.content
+                            .FileProvider.getUriForFile(requireContext(),
+                            org.schabi.newpipe.BuildConfig.APPLICATION_ID + ".provider",
+                            tempFile);
+
+                    final android.content.Intent shareIntent = new android.content.Intent(android.content.Intent.ACTION_SEND);
+                    shareIntent.setType(ZIP_MIME_TYPE);
+                    shareIntent.putExtra(android.content.Intent.EXTRA_STREAM, uri);
+                    shareIntent.addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                    startActivity(android.content.Intent.createChooser(
+                            shareIntent, "Share database"));
+                }
+            } catch (final Exception e) {
+                showErrorSnackbar(e, "Sharing database");
+            }
+            return true;
+        });
+
         final Preference resetSettings = requirePreference(R.string.reset_settings);
+
         // Resets all settings by deleting shared preference and restarting the app
         // A dialogue will pop up to confirm if user intends to reset all settings
         resetSettings.setOnPreferenceClickListener(preference -> {
@@ -142,6 +189,80 @@ public class BackupRestoreSettingsFragment extends BasePreferenceFragment {
 
     }
 
+
+    private void requestSyncFilePathResult(final ActivityResult result) {
+        if (result.getResultCode() != android.app.Activity.RESULT_OK || result.getData() == null) {
+            return;
+        }
+        final Uri uri = result.getData().getData();
+        if (uri != null) {
+            final int takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    | Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
+            requireContext().getContentResolver().takePersistableUriPermission(uri, takeFlags);
+
+            final SharedPreferences preferences = PreferenceManager
+                    .getDefaultSharedPreferences(requireContext());
+            preferences.edit().putString("sync_file_uri", uri.toString()).apply();
+
+            Toast.makeText(requireContext(), R.string.sync_file_title, Toast.LENGTH_SHORT).show();
+            updateSyncFileSummary();
+        }
+    }
+
+
+    private void setupSyncPreferences() {
+        updateSyncFileSummary();
+
+        final Preference syncFilePref = requirePreference(R.string.sync_file_title);
+        syncFilePref.setOnPreferenceClickListener((final Preference p) -> {
+            NoFileManagerSafeGuard.launchSafe(
+                    requestSyncFilePathLauncher,
+                    StoredFileHelper.getPicker(requireContext(),
+                            ZIP_MIME_TYPE, getImportExportDataUri()),
+                    TAG, getContext());
+            return true;
+        });
+
+        final Preference syncNowPref = requirePreference(R.string.sync_now_title);
+        syncNowPref.setOnPreferenceClickListener((final Preference p) -> {
+            final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
+            final String uriStr = prefs.getString("sync_file_uri", null);
+            if (uriStr == null) {
+                Toast.makeText(requireContext(), R.string.sync_file_not_linked,
+                        Toast.LENGTH_SHORT).show();
+                return true;
+            }
+            final Uri syncUri = Uri.parse(uriStr);
+            final StoredFileHelper file = new StoredFileHelper(requireContext(),
+                    syncUri, ZIP_MIME_TYPE);
+
+            new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                    .setTitle(R.string.sync_now_title)
+                    .setMessage(R.string.sync_direction_message)
+                    .setPositiveButton(R.string.sync_download,
+                            (dialog, which) -> importDatabase(file, syncUri))
+                    .setNegativeButton(R.string.sync_upload,
+                            (dialog, which) -> exportDatabase(file, syncUri))
+                    .setNeutralButton(R.string.cancel, null)
+                    .show();
+            return true;
+        });
+    }
+
+    private void updateSyncFileSummary() {
+        final Preference syncFilePref = findPreference(getString(R.string.sync_file_title));
+        if (syncFilePref != null) {
+            final SharedPreferences prefs = PreferenceManager
+                    .getDefaultSharedPreferences(requireContext());
+            final String uriStr = prefs.getString("sync_file_uri", null);
+            if (uriStr != null) {
+                syncFilePref.setSummary(getString(R.string.sync_file_linked,
+                        Uri.parse(uriStr).getLastPathSegment()));
+            } else {
+                syncFilePref.setSummary(R.string.sync_file_summary);
+            }
+        }
+    }
     private void requestExportPathResult(final ActivityResult result) {
         if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
             // will be saved only on success
