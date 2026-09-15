@@ -32,5 +32,6 @@ enum class PlaybackStatus {
     PLAYING,
     PAUSED,
     STOPPED,
+    FINISHED,   // Cuando terminó de reproducir
     ERROR
 }

@@ -73,9 +73,9 @@ class SearchViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val streamUrl = repo.resolveStreamUrl(item.streamUrl)
-                if (streamUrl != null) {
-                    onResolved(streamUrl)
+                val details = repo.resolveStreamDetails(item.streamUrl)
+                if (details != null) {
+                    onResolved(details.directUrl)
                 } else {
                     _error.value = "No se encontró stream reproducible para \"${item.title}\""
                 }
@@ -93,9 +93,9 @@ class SearchViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val streamUrl = repo.resolveStreamUrl(item.streamUrl)
-                if (streamUrl != null) {
-                    downloadManager.enqueue(streamUrl, item.title)
+                val details = repo.resolveStreamDetails(item.streamUrl)
+                if (details != null) {
+                    downloadManager.enqueue(details.directUrl, item.title)
                 } else {
                     _error.value = "No se encontró stream descargable para \"${item.title}\""
                 }

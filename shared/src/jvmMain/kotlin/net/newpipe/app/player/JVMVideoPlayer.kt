@@ -98,6 +98,10 @@ class JVMVideoPlayer : VideoPlayer {
                 _state.update { it.copy(isBuffering = newCache < 100f) }
             }
 
+            override fun finished(mediaPlayer: MediaPlayer) {
+                _state.update { it.copy(playbackStatus = PlaybackStatus.FINISHED) }
+            }
+
             override fun timeChanged(mediaPlayer: MediaPlayer, newTime: Long) {
                 val length = mediaPlayer.status().length()
                 _state.update { 

@@ -18,3 +18,11 @@ data class SearchResultItem(
     val streamUrl: String,          // URL de la página del video, para pasarla al extractor
     val viewCount: Long = 0L
 )
+
+/**
+ * Contiene la URL directa para reproducir y la lista de videos relacionados.
+ */
+data class StreamDetails(
+    val directUrl: String,
+    val relatedItems: List<SearchResultItem>
+)

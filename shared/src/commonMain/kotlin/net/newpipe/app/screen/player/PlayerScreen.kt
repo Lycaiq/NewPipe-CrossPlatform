@@ -51,6 +51,8 @@ import newpipe.shared.generated.resources.ic_favorite_border
 import newpipe.shared.generated.resources.ic_fullscreen
 import newpipe.shared.generated.resources.ic_pause
 import newpipe.shared.generated.resources.ic_play
+import newpipe.shared.generated.resources.ic_skip_next
+
 import newpipe.shared.generated.resources.ic_volume_up
 // Íconos para Bookmarks (asumiremos material icons estándar o drawables de NewPipe)
 // Como la fuente Res podría no tener los íconos de bookmark, usaremos Material Icons de Compose si es posible
@@ -73,16 +75,18 @@ fun PlayerScreen(
     val fullscreenController = LocalFullscreenController.current
     val isFullscreen = fullscreenController.isFullscreen
 
+    val playQueue by viewModel.playQueue.collectAsStateWithLifecycle()
+    val hasNext = playQueue.isNotEmpty()
+
     LaunchedEffect(destination.streamUrl) {
         viewModel.initializeVideo(
-            url = destination.streamUrl,
+            pageUrl = destination.streamUrl,
             title = destination.title,
             uploader = destination.uploaderName ?: "Unknown",
             duration = destination.duration,
             thumbnailUrl = destination.thumbnailUrl,
             viewCount = destination.viewCount
         )
-        viewModel.play(destination.streamUrl)
     }
 
     DisposableEffect(Unit) {
@@ -149,10 +153,12 @@ fun PlayerScreen(
                 state = state,
                 isFullscreen = isFullscreen,
                 isBookmarked = isBookmarked,
+                hasNext = hasNext,
                 onTogglePlayPause = viewModel::togglePlayPause,
                 onSeekPercentage = viewModel::seekToPercentage,
                 onToggleFullscreen = fullscreenController::toggleFullscreen,
                 onToggleBookmark = viewModel::toggleBookmark,
+                onPlayNext = viewModel::playNextInQueue,
                 modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainerLowest)
             )
         }
@@ -164,10 +170,12 @@ private fun PlayerControls(
     state: VideoPlayerState,
     isFullscreen: Boolean,
     isBookmarked: Boolean,
+    hasNext: Boolean,
     onTogglePlayPause: () -> Unit,
     onSeekPercentage: (Float) -> Unit,
     onToggleFullscreen: () -> Unit,
     onToggleBookmark: () -> Unit,
+    onPlayNext: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     // Estado local para la posición del slider mientras se arrastra
@@ -220,17 +228,29 @@ private fun PlayerControls(
                 }
             }
 
-            IconButton(onClick = onTogglePlayPause, modifier = Modifier.size(64.dp)) {
-                val icon = if (state.playbackStatus == PlaybackStatus.PLAYING) {
-                    Res.drawable.ic_pause
-                } else {
-                    Res.drawable.ic_play
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onTogglePlayPause, modifier = Modifier.size(64.dp)) {
+                    val icon = if (state.playbackStatus == PlaybackStatus.PLAYING) {
+                        Res.drawable.ic_pause
+                    } else {
+                        Res.drawable.ic_play
+                    }
+                    Icon(
+                        painter = painterResource(icon),
+                        contentDescription = "Play/Pause",
+                        modifier = Modifier.size(48.dp)
+                    )
                 }
-                Icon(
-                    painter = painterResource(icon),
-                    contentDescription = "Play/Pause",
-                    modifier = Modifier.size(48.dp)
-                )
+                
+                if (hasNext) {
+                    IconButton(onClick = onPlayNext, modifier = Modifier.size(48.dp)) {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_skip_next),
+                            contentDescription = "Siguiente Video",
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+                }
             }
 
             // Controles de volumen y fullscreen a la derecha

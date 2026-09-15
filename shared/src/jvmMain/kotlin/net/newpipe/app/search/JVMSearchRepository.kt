@@ -61,27 +61,41 @@ class JVMSearchRepository : SearchRepository {
             }
         }
 
-    override suspend fun resolveStreamUrl(pageUrl: String): String? =
+    override suspend fun resolveStreamDetails(pageUrl: String): StreamDetails? =
         withContext(Dispatchers.IO) {
             try {
                 val streamInfo = StreamInfo.getInfo(ServiceList.YouTube, pageUrl)
 
-                // Preferimos el stream con mejor calidad que VLC pueda manejar directamente.
-                // HLS/DASH los skippeamos aquí — si el stream es LIVE usamos el HLS sí o sí.
-                if (streamInfo.streamType == StreamType.LIVE_STREAM ||
-                    streamInfo.streamType == StreamType.AUDIO_LIVE_STREAM
-                ) {
-                    return@withContext streamInfo.hlsUrl.ifBlank { null }
+                // Extraer videos relacionados
+                val relatedItems = streamInfo.relatedItems.mapNotNull { item ->
+                    if (item !is org.schabi.newpipe.extractor.stream.StreamInfoItem) return@mapNotNull null
+                    SearchResultItem(
+                        title = item.name ?: return@mapNotNull null,
+                        uploaderName = item.uploaderName ?: "",
+                        duration = item.duration.formatDuration(),
+                        thumbnailUrl = item.thumbnails.firstOrNull()?.url,
+                        streamUrl = item.url ?: return@mapNotNull null,
+                        viewCount = item.viewCount
+                    )
                 }
 
-                // Para videos normales preferimos el stream de video+audio combinado (progressive).
-                // Menos latencia al arrancar que un stream DASH que VLC tiene que parsear.
-                streamInfo.videoStreams
-                    .filter { it.isVideoOnly.not() }  // solo streams con audio
-                    .maxByOrNull { it.height }
-                    ?.content
-                    ?: streamInfo.videoStreams.maxByOrNull { it.height }?.content
-                    ?: streamInfo.audioStreams.maxByOrNull { it.averageBitrate }?.content
+                // Preferimos el stream con mejor calidad que VLC pueda manejar directamente.
+                // HLS/DASH los skippeamos aquí — si el stream es LIVE usamos el HLS sí o sí.
+                val directUrl = if (streamInfo.streamType == StreamType.LIVE_STREAM ||
+                    streamInfo.streamType == StreamType.AUDIO_LIVE_STREAM
+                ) {
+                    streamInfo.hlsUrl.ifBlank { null }
+                } else {
+                    // Para videos normales preferimos el stream de video+audio combinado (progressive).
+                    streamInfo.videoStreams
+                        .filter { it.isVideoOnly.not() }  // solo streams con audio
+                        .maxByOrNull { it.height }
+                        ?.content
+                        ?: streamInfo.videoStreams.maxByOrNull { it.height }?.content
+                        ?: streamInfo.audioStreams.maxByOrNull { it.averageBitrate }?.content
+                }
+
+                directUrl?.let { StreamDetails(it, relatedItems) }
             } catch (e: Exception) {
                 Logger.e("JVMSearchRepository", e) { "No se pudo resolver URL para: $pageUrl" }
                 null

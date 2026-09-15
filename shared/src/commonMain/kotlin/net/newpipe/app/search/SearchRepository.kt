@@ -23,8 +23,8 @@ interface SearchRepository {
 
     /**
      * Dado el URL de página de un video (ej: https://youtube.com/watch?v=xxx),
-     * devuelve la URL del stream directo que VLC puede reproducir.
+     * devuelve los detalles del stream incluyendo URL directa y relacionados.
      * Bloquea el hilo — llámala siempre desde un Dispatcher.IO.
      */
-    suspend fun resolveStreamUrl(pageUrl: String): String?
+    suspend fun resolveStreamDetails(pageUrl: String): StreamDetails?
 }

@@ -77,16 +77,14 @@ fun HomeScreen(
         isLoading = isLoading,
         error = error,
         onItemClick = { item ->
-            viewModel.resolveAndPlay(item) { streamUrl ->
-                navigator.navigateTo(Destination.Player(
-                    streamUrl = streamUrl, 
-                    title = item.title, 
-                    uploaderName = item.uploaderName,
-                    duration = item.duration,
-                    thumbnailUrl = item.thumbnailUrl ?: "",
-                    viewCount = item.viewCount
-                ))
-            }
+            navigator.navigateTo(Destination.Player(
+                streamUrl = item.streamUrl, // Este ahora es el pageUrl
+                title = item.title, 
+                uploaderName = item.uploaderName,
+                duration = item.duration,
+                thumbnailUrl = item.thumbnailUrl ?: "",
+                viewCount = item.viewCount
+            ))
         },
         onDownloadsClick = {
             navigator.navigateTo(Destination.Downloads)
