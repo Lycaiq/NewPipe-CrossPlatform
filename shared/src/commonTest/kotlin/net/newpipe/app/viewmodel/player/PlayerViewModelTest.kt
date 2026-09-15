@@ -19,7 +19,7 @@ class PlayerViewModelTest {
     @Test
     fun `togglePlayPause alterna correctamente el estado`() {
         val fakePlayer = FakeVideoPlayer()
-        val viewModel = PlayerViewModel(fakePlayer)
+        val viewModel = PlayerViewModel(fakePlayer, FakeBookmarkRepository(), FakeHistoryRepository(), FakeSearchRepository())
 
         // Simular que el player está reproduciendo
         fakePlayer.mutableState.update { it.copy(playbackStatus = PlaybackStatus.PLAYING) }
@@ -34,7 +34,7 @@ class PlayerViewModelTest {
     @Test
     fun `seekRelative calcula bien el desplazamiento`() {
         val fakePlayer = FakeVideoPlayer()
-        val viewModel = PlayerViewModel(fakePlayer)
+        val viewModel = PlayerViewModel(fakePlayer, FakeBookmarkRepository(), FakeHistoryRepository(), FakeSearchRepository())
 
         fakePlayer.mutableState.update { it.copy(currentPositionMs = 15000L, durationMs = 60000L) }
         
@@ -50,7 +50,7 @@ class PlayerViewModelTest {
     @Test
     fun `seekToPercentage calcula bien la posicion absoluta`() {
         val fakePlayer = FakeVideoPlayer()
-        val viewModel = PlayerViewModel(fakePlayer)
+        val viewModel = PlayerViewModel(fakePlayer, FakeBookmarkRepository(), FakeHistoryRepository(), FakeSearchRepository())
 
         fakePlayer.mutableState.update { it.copy(durationMs = 100_000L) }
         
@@ -61,10 +61,10 @@ class PlayerViewModelTest {
     @Test
     fun `stress test de play y stop rapidos`() {
         val fakePlayer = FakeVideoPlayer()
-        val viewModel = PlayerViewModel(fakePlayer)
+        val viewModel = PlayerViewModel(fakePlayer, FakeBookmarkRepository(), FakeHistoryRepository(), FakeSearchRepository())
 
         for (i in 1..100) {
-            viewModel.play("http://fake.com/$i")
+            viewModel.initializeVideo("http://fake.com/$i", "title", "uploader", "10:00", "", 0)
             viewModel.stop()
         }
         
@@ -74,7 +74,7 @@ class PlayerViewModelTest {
     @Test
     fun `stress test de seek agresivo`() {
         val fakePlayer = FakeVideoPlayer()
-        val viewModel = PlayerViewModel(fakePlayer)
+        val viewModel = PlayerViewModel(fakePlayer, FakeBookmarkRepository(), FakeHistoryRepository(), FakeSearchRepository())
 
         fakePlayer.mutableState.update { it.copy(currentPositionMs = 5000L, durationMs = 100_000L) }
         
@@ -118,4 +118,24 @@ class FakeVideoPlayer : VideoPlayer {
     }
 
     override fun release() {}
+}
+
+class FakeBookmarkRepository : net.newpipe.app.bookmark.BookmarkRepository {
+    override val bookmarks = MutableStateFlow(emptyList<net.newpipe.app.bookmark.SavedVideo>())
+    override fun toggleBookmark(video: net.newpipe.app.bookmark.SavedVideo) {}
+    override fun removeBookmark(streamUrl: String) {}
+}
+
+class FakeHistoryRepository : net.newpipe.app.history.HistoryRepository {
+    override val history = MutableStateFlow(emptyList<net.newpipe.app.history.HistoryItem>())
+    override fun addToHistory(item: net.newpipe.app.history.HistoryItem) {}
+    override fun clearHistory() {}
+    override fun removeHistoryItem(streamUrl: String) {}
+}
+
+class FakeSearchRepository : net.newpipe.app.search.SearchRepository {
+    override suspend fun search(query: String) = emptyList<net.newpipe.app.search.SearchResultItem>()
+    override suspend fun resolveStreamDetails(pageUrl: String): net.newpipe.app.search.StreamDetails? = null
+    override suspend fun getChannelVideos(channelUrl: String) = emptyList<net.newpipe.app.search.SearchResultItem>()
+    override suspend fun getTrending() = emptyList<net.newpipe.app.search.SearchResultItem>()
 }
