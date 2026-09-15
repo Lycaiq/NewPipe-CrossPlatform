@@ -26,9 +26,21 @@ xcuserdata
 .externalNativeBuild
 .cxx
 node_modules/
+vendor/
 *.xcodeproj/*
 !*.xcodeproj/project.pbxproj
 !*.xcodeproj/xcshareddata/
 !*.xcodeproj/project.xcworkspace/
 !*.xcworkspace/contents.xcworkspacedata
 **/xcshareddata/WorkspaceSettings.xcsettings
+
+# configs locales y secretos
+.env
+.env.*
+*.log
+*.sqlite
+*.db
+credentials/
+secrets/
+*.pem
+*.key

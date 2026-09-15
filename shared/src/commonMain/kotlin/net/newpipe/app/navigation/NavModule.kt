@@ -63,6 +63,8 @@ class Navigator(
         backstack.size > 1 -> backstack.removeLastOrNull()
 
         else -> {
+            // Si ya estamos en la última vista del stack, hacer "back" significa que el user 
+            // quiere salir de la app, así que disparamos el onCloseRequest.
             Logger.i(messageString = "Cannot remove the only entry in backstack!")
             onCloseRequest()
         }
