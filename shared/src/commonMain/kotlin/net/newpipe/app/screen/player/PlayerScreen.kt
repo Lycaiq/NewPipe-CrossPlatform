@@ -26,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -152,17 +153,29 @@ private fun PlayerControls(
     onToggleFullscreen: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // Estado local para la posición del slider mientras se arrastra
+    var sliderPosition by remember { androidx.compose.runtime.mutableStateOf(0f) }
+    var isDragging by remember { androidx.compose.runtime.mutableStateOf(false) }
+
     Column(modifier = modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
         // Timeline
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = formatTime(state.currentPositionMs),
+                // Si estamos arrastrando, mostramos el tiempo calculado del slider
+                text = formatTime(if (isDragging) (sliderPosition * state.durationMs.toFloat()).toLong() else state.currentPositionMs),
                 style = MaterialTheme.typography.labelMedium
             )
             Spacer(Modifier.width(8.dp))
             Slider(
-                value = state.progress,
-                onValueChange = { onSeekPercentage(it) },
+                value = if (isDragging) sliderPosition else state.progress,
+                onValueChange = { 
+                    isDragging = true
+                    sliderPosition = it 
+                },
+                onValueChangeFinished = {
+                    isDragging = false
+                    onSeekPercentage(sliderPosition)
+                },
                 modifier = Modifier.weight(1f)
             )
             Spacer(Modifier.width(8.dp))
