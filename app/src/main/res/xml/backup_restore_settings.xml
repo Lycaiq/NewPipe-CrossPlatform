@@ -17,6 +17,13 @@
         app:iconSpaceReserved="false" />
 
     <Preference
+        android:key="@string/share_data_title"
+        android:summary="@string/share_data_summary"
+        android:title="@string/share_data_title"
+        app:singleLineTitle="false"
+        app:iconSpaceReserved="false" />
+
+    <Preference
         android:key="@string/reset_settings"
         android:title="@string/reset_settings_title"
         android:summary="@string/reset_settings_summary"

@@ -100,7 +100,44 @@ public class BackupRestoreSettingsFragment extends BasePreferenceFragment {
             return true;
         });
 
+
+        final Preference shareDataPreference = requirePreference(R.string.share_data_title);
+        shareDataPreference.setOnPreferenceClickListener((final Preference p) -> {
+            try {
+                final java.io.File cacheDir = requireContext().getCacheDir();
+                final java.io.File tempFile = new java.io.File(cacheDir,
+                        "NewPipeData-" + exportDateFormat.format(new Date()) + ".zip");
+
+                try (java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newSingleThreadExecutor()) {
+                    executor.submit(org.schabi.newpipe.NewPipeDatabase::checkpoint).get();
+                    final android.content.SharedPreferences preferences = androidx.preference
+                            .PreferenceManager.getDefaultSharedPreferences(requireContext());
+
+                    final StoredFileHelper tempStoredFile = new StoredFileHelper(requireContext(),
+                            android.net.Uri.fromFile(tempFile), ZIP_MIME_TYPE);
+                    manager.exportDatabase(preferences, tempStoredFile);
+
+                    final android.net.Uri uri = androidx.core.content
+                            .FileProvider.getUriForFile(requireContext(),
+                            org.schabi.newpipe.BuildConfig.APPLICATION_ID + ".provider",
+                            tempFile);
+
+                    final android.content.Intent shareIntent = new android.content.Intent(android.content.Intent.ACTION_SEND);
+                    shareIntent.setType(ZIP_MIME_TYPE);
+                    shareIntent.putExtra(android.content.Intent.EXTRA_STREAM, uri);
+                    shareIntent.addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                    startActivity(android.content.Intent.createChooser(
+                            shareIntent, "Share database"));
+                }
+            } catch (final Exception e) {
+                showErrorSnackbar(e, "Sharing database");
+            }
+            return true;
+        });
+
         final Preference resetSettings = requirePreference(R.string.reset_settings);
+
         // Resets all settings by deleting shared preference and restarting the app
         // A dialogue will pop up to confirm if user intends to reset all settings
         resetSettings.setOnPreferenceClickListener(preference -> {
