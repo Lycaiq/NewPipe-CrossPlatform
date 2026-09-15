@@ -30,6 +30,7 @@ fun App(
         configuration = koinConfiguration<KoinApp>(
             appDeclaration = {
                 modules(navModule())
+                modules(net.newpipe.app.di.platformModule)
             }
         )
     ) {
