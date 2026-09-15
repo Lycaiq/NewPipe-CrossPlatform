@@ -49,6 +49,10 @@ fun navModule() = module {
     navigation<Destination.Bookmarks> {
         net.newpipe.app.screen.bookmark.BookmarksScreen()
     }
+
+    navigation<Destination.History> {
+        net.newpipe.app.screen.history.HistoryScreen()
+    }
 }
 
 /**

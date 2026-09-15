@@ -16,6 +16,10 @@ import net.newpipe.app.player.PlaybackStatus
 import net.newpipe.app.player.VideoPlayer
 import org.koin.core.annotation.KoinViewModel
 
+import net.newpipe.app.history.HistoryItem
+import net.newpipe.app.history.HistoryRepository
+import net.newpipe.app.utils.currentTimeMillis
+
 /**
  * ViewModel que conecta la UI del reproductor con la implementación nativa (VideoPlayer).
  * Agrupa toda la lógica de control para que la UI solo dibuje y reaccione.
@@ -23,7 +27,8 @@ import org.koin.core.annotation.KoinViewModel
 @KoinViewModel
 class PlayerViewModel(
     private val player: VideoPlayer,
-    private val bookmarkRepository: BookmarkRepository
+    private val bookmarkRepository: BookmarkRepository,
+    private val historyRepository: HistoryRepository
 ) : ViewModel() {
 
     val playerState = player.state
@@ -36,16 +41,27 @@ class PlayerViewModel(
         list.any { it.streamUrl == currentStreamUrl }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
-    fun initializeVideo(url: String, title: String, uploader: String, duration: String) {
+    fun initializeVideo(url: String, title: String, uploader: String, duration: String, thumbnailUrl: String, viewCount: Long) {
         currentStreamUrl = url
         currentSavedVideo = SavedVideo(
             title = title,
             uploaderName = uploader,
             duration = duration,
-            thumbnailUrl = null,
+            thumbnailUrl = thumbnailUrl,
             streamUrl = url,
+            viewCount = viewCount,
             savedAtMs = 0L
         )
+
+        historyRepository.addToHistory(HistoryItem(
+            streamUrl = url,
+            title = title,
+            uploaderName = uploader,
+            duration = duration,
+            thumbnailUrl = thumbnailUrl,
+            viewCount = viewCount,
+            lastAccessTimeMs = currentTimeMillis()
+        ))
     }
 
     /** Alterna el estado de guardado (Bookmark) */

@@ -78,7 +78,9 @@ fun PlayerScreen(
             url = destination.streamUrl,
             title = destination.title,
             uploader = destination.uploaderName ?: "Unknown",
-            duration = "00:00" // O pasarlo por el destination
+            duration = destination.duration,
+            thumbnailUrl = destination.thumbnailUrl,
+            viewCount = destination.viewCount
         )
         viewModel.play(destination.streamUrl)
     }

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-package net.newpipe.app.screen.bookmark
+package net.newpipe.app.screen.history
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -27,32 +29,42 @@ import net.newpipe.app.navigation.Destination
 import net.newpipe.app.navigation.Navigator
 import net.newpipe.app.search.SearchResultItem
 import net.newpipe.app.screen.home.VideoGridItem
-import net.newpipe.app.viewmodel.bookmark.BookmarksViewModel
+import net.newpipe.app.viewmodel.history.HistoryViewModel
+import newpipe.shared.generated.resources.Res
+import newpipe.shared.generated.resources.ic_delete
+import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun BookmarksScreen(
+fun HistoryScreen(
     navigator: Navigator = koinInject(),
-    viewModel: BookmarksViewModel = koinViewModel()
+    viewModel: HistoryViewModel = koinViewModel()
 ) {
-    val bookmarks by viewModel.bookmarks.collectAsStateWithLifecycle()
+    val history by viewModel.history.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = "Favoritos",
-                onNavigateUp = { navigator.navigateUp() }
+                title = "Historial",
+                onNavigateUp = { navigator.navigateUp() },
+                actions = {
+                    if (history.isNotEmpty()) {
+                        IconButton(onClick = { viewModel.clearHistory() }) {
+                            Icon(painter = painterResource(Res.drawable.ic_delete), contentDescription = "Limpiar Historial")
+                        }
+                    }
+                }
             )
         }
     ) { paddingValues ->
-        if (bookmarks.isEmpty()) {
+        if (history.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxSize().padding(paddingValues),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "No tienes videos guardados aún.",
+                    text = "No has visto ningún video.",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -65,9 +77,7 @@ fun BookmarksScreen(
                     .padding(paddingValues),
                 contentPadding = PaddingValues(16.dp)
             ) {
-                items(bookmarks) { video ->
-                    // Reutilizamos el VideoGridItem de HomeScreen
-                    // Mapeamos temporalmente a SearchResultItem
+                items(history, key = { it.streamUrl }) { video ->
                     val mappedItem = SearchResultItem(
                         title = video.title,
                         uploaderName = video.uploaderName,
@@ -86,7 +96,7 @@ fun BookmarksScreen(
                                     title = video.title,
                                     uploaderName = video.uploaderName,
                                     duration = video.duration,
-                                    thumbnailUrl = video.thumbnailUrl ?: "",
+                                    thumbnailUrl = video.thumbnailUrl,
                                     viewCount = video.viewCount
                                 )
                             )

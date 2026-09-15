@@ -112,6 +112,14 @@ shared/jvmMain  ← implementaciones JVM de las interfaces de platform
 
 ---
 
+### [ ] FASE 6.5 — Core Loop (Historial, Cola y Canales)
+**Objetivo:** Implementar las funcionalidades críticas de retención antes de empaquetar.
+- [ ] **Historial**: Crear repositorio, inyectarlo en el player para auto-guardado y crear la UI (`HistoryScreen`).
+- [ ] **Siguiente Video / Cola**: Parsear videos relacionados del extractor y habilitar autoplay/skip en el reproductor.
+- [ ] **Suscripciones**: Crear repositorio de canales, vista de canal (`ChannelScreen`) y listado de suscripciones.
+
+---
+
 ### [ ] FASE 7 — Empaquetado y distribución Windows
 **Objetivo:** Generar `.msi` y `.exe` instalables y funcionales.
 - [x] Configurar `jpackage` en `desktopApp/build.gradle.kts` con metadata

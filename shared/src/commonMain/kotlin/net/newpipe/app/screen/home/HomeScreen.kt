@@ -48,6 +48,8 @@ import net.newpipe.app.search.SearchResultItem
 import net.newpipe.app.viewmodel.search.SearchViewModel
 import newpipe.shared.generated.resources.Res
 import newpipe.shared.generated.resources.ic_favorite
+import newpipe.shared.generated.resources.ic_history
+
 import newpipe.shared.generated.resources.ic_cloud_download
 import newpipe.shared.generated.resources.ic_file_download
 import newpipe.shared.generated.resources.ic_search
@@ -76,7 +78,14 @@ fun HomeScreen(
         error = error,
         onItemClick = { item ->
             viewModel.resolveAndPlay(item) { streamUrl ->
-                navigator.navigateTo(Destination.Player(streamUrl = streamUrl, title = item.title, uploaderName = item.uploaderName))
+                navigator.navigateTo(Destination.Player(
+                    streamUrl = streamUrl, 
+                    title = item.title, 
+                    uploaderName = item.uploaderName,
+                    duration = item.duration,
+                    thumbnailUrl = item.thumbnailUrl ?: "",
+                    viewCount = item.viewCount
+                ))
             }
         },
         onDownloadsClick = {
@@ -84,6 +93,9 @@ fun HomeScreen(
         },
         onBookmarksClick = {
             navigator.navigateTo(Destination.Bookmarks)
+        },
+        onHistoryClick = {
+            navigator.navigateTo(Destination.History)
         },
         onDownloadClick = { item ->
             viewModel.enqueueDownload(item)
@@ -102,6 +114,7 @@ fun HomeScreenContent(
     onItemClick: (SearchResultItem) -> Unit = {},
     onDownloadsClick: () -> Unit = {},
     onBookmarksClick: () -> Unit = {},
+    onHistoryClick: () -> Unit = {},
     onDownloadClick: (SearchResultItem) -> Unit = {}
 ) {
     Scaffold { paddingValues ->
@@ -140,6 +153,16 @@ fun HomeScreenContent(
                 
                 Spacer(Modifier.width(8.dp))
                 
+                androidx.compose.material3.IconButton(
+                    onClick = onHistoryClick,
+                    modifier = Modifier.padding(top = 4.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_history),
+                        contentDescription = "Historial"
+                    )
+                }
+
                 androidx.compose.material3.IconButton(
                     onClick = onBookmarksClick,
                     modifier = Modifier.padding(top = 4.dp)
