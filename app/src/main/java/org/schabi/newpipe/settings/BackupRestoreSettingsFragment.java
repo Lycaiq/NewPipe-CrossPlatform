@@ -104,20 +104,24 @@ public class BackupRestoreSettingsFragment extends BasePreferenceFragment {
         exportGdrivePreference.setOnPreferenceClickListener((final Preference p) -> {
             try {
                 // Export database to a temporary local file first
-                final java.io.File cacheDir = requireContext().getCacheDir();
-                final java.io.File tempFile = new java.io.File(cacheDir, "NewPipeData-" + exportDateFormat.format(new Date()) + ".zip");
-                
+                final java.io.File cacheDir = \n                requireContext().getCacheDir();
+                final java.io.File tempFile = new java.io.File(cacheDir,
+        "NewPipeData-" + exportDateFormat.format(new Date()) + ".zip");
+
                 try (java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newSingleThreadExecutor()) {
                     executor.submit(org.schabi.newpipe.NewPipeDatabase::checkpoint).get();
-                    final android.content.SharedPreferences preferences = androidx.preference.PreferenceManager
+                    final android.content.SharedPreferences preferences = 
+                            androidx.preference.PreferenceManager
                             .getDefaultSharedPreferences(requireContext());
-                    
+
                     // Create a StoredFileHelper pointing to this temp file
-                    StoredFileHelper tempStoredFile = new StoredFileHelper(requireContext(), android.net.Uri.fromFile(tempFile), ZIP_MIME_TYPE);
+                    final StoredFileHelper tempStoredFile = new StoredFileHelper(requireContext(),
+                            android.net.Uri.fromFile(tempFile), ZIP_MIME_TYPE);
                     manager.exportDatabase(preferences, tempStoredFile);
-                    
+
                     // Trigger Google Drive flow
-                    org.schabi.newpipe.settings.export.GoogleDriveBackupManager.INSTANCE.startOAuthDeviceFlow(
+                    org.schabi.newpipe.settings.export.GoogleDriveBackupManager.INSTANCE
+                            .startOAuthDeviceFlow(
                             requireContext(),
                             (userCode, url) -> {
                                 new androidx.appcompat.app.AlertDialog.Builder(requireContext())
@@ -128,26 +132,29 @@ public class BackupRestoreSettingsFragment extends BasePreferenceFragment {
                                 return kotlin.Unit.INSTANCE;
                             },
                             (token) -> {
-                                org.schabi.newpipe.settings.export.GoogleDriveBackupManager.INSTANCE.uploadZipToDrive(requireContext(), token, tempFile);
+                                org.schabi.newpipe.settings.export.GoogleDriveBackupManager.INSTANCE
+                                        .uploadZipToDrive(requireContext(), token, tempFile);
                                 return kotlin.Unit.INSTANCE;
                             }
                     );
                 }
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 showErrorSnackbar(e, "Exporting database to Google Drive");
             }
             return true;
         });
 
         final Preference resetSettings = requirePreference(R.string.reset_settings);
-        
+
         final Preference importGdrivePreference = requirePreference(R.string.import_gdrive_title);
         importGdrivePreference.setOnPreferenceClickListener((final Preference p) -> {
             try {
-                final java.io.File cacheDir = requireContext().getCacheDir();
-                final java.io.File tempFile = new java.io.File(cacheDir, "NewPipeData-Import-" + exportDateFormat.format(new Date()) + ".zip");
-                
-                org.schabi.newpipe.settings.export.GoogleDriveBackupManager.INSTANCE.startOAuthDeviceFlow(
+                final java.io.File cacheDir = \n                requireContext().getCacheDir();
+                final java.io.File tempFile = new java.io.File(cacheDir,
+                        "NewPipeData-Import-" + exportDateFormat.format(new Date()) + ".zip");
+
+                org.schabi.newpipe.settings.export.GoogleDriveBackupManager.INSTANCE
+                            .startOAuthDeviceFlow(
                         requireContext(),
                         (userCode, url) -> {
                             new androidx.appcompat.app.AlertDialog.Builder(requireContext())
@@ -158,9 +165,11 @@ public class BackupRestoreSettingsFragment extends BasePreferenceFragment {
                             return kotlin.Unit.INSTANCE;
                         },
                         (token) -> {
-                            org.schabi.newpipe.settings.export.GoogleDriveBackupManager.INSTANCE.downloadZipFromDrive(
+                            org.schabi.newpipe.settings.export.GoogleDriveBackupManager.INSTANCE
+                                    .downloadZipFromDrive(
                                     requireContext(), token, tempFile, () -> {
-                                        StoredFileHelper tempStoredFile = new StoredFileHelper(requireContext(), android.net.Uri.fromFile(tempFile), ZIP_MIME_TYPE);
+                                        final StoredFileHelper tempStoredFile = new StoredFileHelper(requireContext(),
+                            android.net.Uri.fromFile(tempFile), ZIP_MIME_TYPE);
                                         importDatabase(tempStoredFile, android.net.Uri.fromFile(tempFile));
                                         return kotlin.Unit.INSTANCE;
                                     }
@@ -168,12 +177,12 @@ public class BackupRestoreSettingsFragment extends BasePreferenceFragment {
                             return kotlin.Unit.INSTANCE;
                         }
                 );
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 showErrorSnackbar(e, "Importing database from Google Drive");
             }
             return true;
         });
-        
+
         // Resets all settings by deleting shared preference and restarting the app
         // A dialogue will pop up to confirm if user intends to reset all settings
         resetSettings.setOnPreferenceClickListener(preference -> {
@@ -257,7 +266,7 @@ public class BackupRestoreSettingsFragment extends BasePreferenceFragment {
             saveLastImportExportDataUri(exportDataUri); // save export path only on success
             Toast.makeText(requireContext(), R.string.export_complete_toast, Toast.LENGTH_SHORT)
                     .show();
-        } catch (final Exception e) {
+        } catch (final final Exception e) {
             showErrorSnackbar(e, "Exporting database and settings");
         }
     }
@@ -303,7 +312,7 @@ public class BackupRestoreSettingsFragment extends BasePreferenceFragment {
                                 } else {
                                     manager.loadSerializedPrefs(file, prefs);
                                 }
-                            } catch (IOException | ClassNotFoundException | JsonParserException e) {
+                            } catch (IOException | ClassNotFoundException | JsonParserfinal Exception e) {
                                 createErrorNotification(e, "Importing preferences");
                                 return;
                             }
@@ -314,7 +323,7 @@ public class BackupRestoreSettingsFragment extends BasePreferenceFragment {
             } else {
                 finishImport(importDataUri);
             }
-        } catch (final Exception e) {
+        } catch (final final Exception e) {
             showErrorSnackbar(e, "Importing database and settings");
         }
     }
