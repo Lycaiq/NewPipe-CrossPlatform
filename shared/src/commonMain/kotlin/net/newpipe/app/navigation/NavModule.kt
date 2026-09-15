@@ -53,6 +53,14 @@ fun navModule() = module {
     navigation<Destination.History> {
         net.newpipe.app.screen.history.HistoryScreen()
     }
+
+    navigation<Destination.Channel> { destination ->
+        net.newpipe.app.screen.channel.ChannelScreen(destination)
+    }
+
+    navigation<Destination.Subscriptions> {
+        net.newpipe.app.screen.subscription.SubscriptionsScreen()
+    }
 }
 
 /**

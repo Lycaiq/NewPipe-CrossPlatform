@@ -6,6 +6,8 @@
 package net.newpipe.app.screen.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -53,6 +55,8 @@ import newpipe.shared.generated.resources.ic_history
 import newpipe.shared.generated.resources.ic_cloud_download
 import newpipe.shared.generated.resources.ic_file_download
 import newpipe.shared.generated.resources.ic_search
+import newpipe.shared.generated.resources.ic_subscriptions
+
 import newpipe.shared.generated.resources.search
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -97,6 +101,14 @@ fun HomeScreen(
         },
         onDownloadClick = { item ->
             viewModel.enqueueDownload(item)
+        },
+        onUploaderClick = { item ->
+            if (item.uploaderUrl != null) {
+                navigator.navigateTo(Destination.Channel(item.uploaderUrl, item.uploaderName))
+            }
+        },
+        onSubscriptionsClick = {
+            navigator.navigateTo(Destination.Subscriptions)
         }
     )
 }
@@ -113,7 +125,9 @@ fun HomeScreenContent(
     onDownloadsClick: () -> Unit = {},
     onBookmarksClick: () -> Unit = {},
     onHistoryClick: () -> Unit = {},
-    onDownloadClick: (SearchResultItem) -> Unit = {}
+    onDownloadClick: (SearchResultItem) -> Unit = {},
+    onUploaderClick: (SearchResultItem) -> Unit = {},
+    onSubscriptionsClick: () -> Unit = {}
 ) {
     Scaffold { paddingValues ->
         Column(
@@ -172,6 +186,16 @@ fun HomeScreenContent(
                 }
 
                 androidx.compose.material3.IconButton(
+                    onClick = onSubscriptionsClick,
+                    modifier = Modifier.padding(top = 4.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_subscriptions),
+                        contentDescription = "Suscripciones"
+                    )
+                }
+
+                androidx.compose.material3.IconButton(
                     onClick = onDownloadsClick,
                     modifier = Modifier.padding(top = 4.dp)
                 ) {
@@ -197,7 +221,8 @@ fun HomeScreenContent(
                     else -> ResultsGrid(
                         results = results, 
                         onItemClick = onItemClick,
-                        onDownloadClick = onDownloadClick
+                        onDownloadClick = onDownloadClick,
+                onUploaderClick = onUploaderClick
                     )
                 }
             }
@@ -209,7 +234,8 @@ fun HomeScreenContent(
 private fun ResultsGrid(
     results: List<SearchResultItem>,
     onItemClick: (SearchResultItem) -> Unit,
-    onDownloadClick: (SearchResultItem) -> Unit
+    onDownloadClick: (SearchResultItem) -> Unit,
+    onUploaderClick: (SearchResultItem) -> Unit
 ) {
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 280.dp),
@@ -222,7 +248,8 @@ private fun ResultsGrid(
             VideoGridItem(
                 item = item, 
                 onClick = { onItemClick(item) },
-                onDownload = { onDownloadClick(item) }
+                onDownload = { onDownloadClick(item) },
+                onUploaderClick = { onUploaderClick(item) }
             )
         }
     }
@@ -232,7 +259,8 @@ private fun ResultsGrid(
 fun VideoGridItem(
     item: SearchResultItem,
     onClick: () -> Unit,
-    onDownload: () -> Unit
+    onDownload: () -> Unit,
+    onUploaderClick: (() -> Unit)? = null
 ) {
     Surface(
         onClick = onClick,
@@ -250,34 +278,31 @@ fun VideoGridItem(
             ) {
                 AsyncImage(
                     model = item.thumbnailUrl,
-                    contentDescription = "Thumbnail for ${item.title}",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
+                    contentDescription = item.title,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
                 )
                 
-                Surface(
-                    color = Color.Black.copy(alpha = 0.7f),
-                    shape = MaterialTheme.shapes.small,
+                Text(
+                    text = item.duration,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.White,
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
-                        .padding(8.dp)
-                ) {
-                    Text(
-                        text = item.duration,
-                        color = Color.White,
-                        style = MaterialTheme.typography.labelSmall,
-                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
-                    )
-                }
+                        .padding(4.dp)
+                        .background(Color.Black.copy(alpha = 0.7f), MaterialTheme.shapes.extraSmall)
+                        .padding(horizontal = 4.dp, vertical = 2.dp)
+                )
             }
 
-            Spacer(Modifier.height(12.dp))
-
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp, bottom = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top
             ) {
-                Column(modifier = Modifier.weight(1f)) {
+                Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
                     Text(
                         text = item.title,
                         style = MaterialTheme.typography.titleMedium,
@@ -290,7 +315,11 @@ fun VideoGridItem(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.background(Color.Transparent).let { 
+                            if (onUploaderClick != null) it.clickable { onUploaderClick() } else it 
+
+                        }
                     )
                 }
                 

@@ -13,6 +13,7 @@ package net.newpipe.app.search
 data class SearchResultItem(
     val title: String,
     val uploaderName: String,
+    val uploaderUrl: String? = null,
     val duration: String,          // ya formateado "HH:MM:SS" o "LIVE"
     val thumbnailUrl: String?,
     val streamUrl: String,          // URL de la página del video, para pasarla al extractor

@@ -27,4 +27,10 @@ interface SearchRepository {
      * Bloquea el hilo — llámala siempre desde un Dispatcher.IO.
      */
     suspend fun resolveStreamDetails(pageUrl: String): StreamDetails?
+
+    /**
+     * Dado el URL de un canal, devuelve la lista de videos subidos.
+     * Bloquea el hilo.
+     */
+    suspend fun getChannelVideos(channelUrl: String): List<SearchResultItem>
 }

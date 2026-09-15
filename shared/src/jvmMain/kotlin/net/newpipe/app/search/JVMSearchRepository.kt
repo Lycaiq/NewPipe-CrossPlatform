@@ -15,6 +15,8 @@ import org.schabi.newpipe.extractor.search.SearchInfo
 import org.schabi.newpipe.extractor.services.youtube.linkHandler.YoutubeSearchQueryHandlerFactory
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.StreamType
+import org.schabi.newpipe.extractor.channel.ChannelInfo
+
 
 /**
  * Implementación del repo de búsqueda para JVM.
@@ -49,6 +51,7 @@ class JVMSearchRepository : SearchRepository {
                     SearchResultItem(
                         title = item.name ?: return@mapNotNull null,
                         uploaderName = item.uploaderName ?: "",
+                        uploaderUrl = item.uploaderUrl,
                         duration = item.duration.formatDuration(),
                         thumbnailUrl = item.thumbnails.firstOrNull()?.url,
                         streamUrl = item.url ?: return@mapNotNull null,
@@ -72,6 +75,7 @@ class JVMSearchRepository : SearchRepository {
                     SearchResultItem(
                         title = item.name ?: return@mapNotNull null,
                         uploaderName = item.uploaderName ?: "",
+                        uploaderUrl = item.uploaderUrl,
                         duration = item.duration.formatDuration(),
                         thumbnailUrl = item.thumbnails.firstOrNull()?.url,
                         streamUrl = item.url ?: return@mapNotNull null,
@@ -99,6 +103,32 @@ class JVMSearchRepository : SearchRepository {
             } catch (e: Exception) {
                 Logger.e("JVMSearchRepository", e) { "No se pudo resolver URL para: $pageUrl" }
                 null
+            }
+        }
+
+    override suspend fun getChannelVideos(channelUrl: String): List<SearchResultItem> =
+        withContext(Dispatchers.IO) {
+            try {
+                val channelInfo = org.schabi.newpipe.extractor.channel.ChannelInfo.getInfo(ServiceList.YouTube, channelUrl)
+                val tab = channelInfo.tabs.firstOrNull() ?: return@withContext emptyList()
+                val tabInfo = org.schabi.newpipe.extractor.channel.tabs.ChannelTabInfo.getInfo(ServiceList.YouTube, tab)
+                
+                tabInfo.relatedItems.mapNotNull { item ->
+                    if (item !is org.schabi.newpipe.extractor.stream.StreamInfoItem) return@mapNotNull null
+
+                    SearchResultItem(
+                        title = item.name ?: return@mapNotNull null,
+                        uploaderName = item.uploaderName ?: "",
+                        uploaderUrl = item.uploaderUrl,
+                        duration = item.duration.formatDuration(),
+                        thumbnailUrl = item.thumbnails.firstOrNull()?.url,
+                        streamUrl = item.url ?: return@mapNotNull null,
+                        viewCount = item.viewCount
+                    )
+                }
+            } catch (e: Exception) {
+                Logger.e("JVMSearchRepository", e) { "Error al obtener videos del canal: $channelUrl" }
+                emptyList()
             }
         }
 

@@ -46,4 +46,10 @@ sealed interface Destination : NavKey {
 
     @Serializable
     data object History : Destination
+
+    @Serializable
+    data class Channel(val url: String, val name: String) : Destination
+
+    @Serializable
+    data object Subscriptions : Destination
 }
