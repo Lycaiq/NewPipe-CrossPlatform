@@ -103,7 +103,16 @@ shared/jvmMain  ← implementaciones JVM de las interfaces de platform
 
 ---
 
-### [ ] FASE 6 — Empaquetado y distribución Windows
+### [x] FASE 6 — Guardado Local de Videos (Bookmarks)
+**Objetivo:** Permitir guardar videos favoritos en almacenamiento local.
+- [x] Crear `BookmarkRepository` usando KMP Settings y kotlinx.serialization.
+- [x] Añadir estado y botón de guardado en `PlayerScreen`.
+- [x] Crear `BookmarksScreen` con la grilla de videos guardados.
+- [x] Añadir navegación desde el `HomeScreen`.
+
+---
+
+### [ ] FASE 7 — Empaquetado y distribución Windows
 **Objetivo:** Generar `.msi` y `.exe` instalables y funcionales.
 - [x] Configurar `jpackage` en `desktopApp/build.gradle.kts` con metadata
 - [x] GitHub Actions: workflow en `windows-latest` que genera el artefacto
@@ -113,6 +122,6 @@ shared/jvmMain  ← implementaciones JVM de las interfaces de platform
 ---
 
 ## Última actualización
-- Fase completada: **FASE 5** ✅
-- Fase actual: **FASE 6** (pendiente)
-- Archivos nuevos/modificados: `HomeScreen` (grid ui), dependencias de Coil, `Main.kt` (ImageLoader).
+- Fase completada: **FASE 6** ✅
+- Fase actual: **FASE 7** (en progreso)
+- Archivos nuevos/modificados: Implementación completa de BookmarksScreen, actualización de Koin Modules y drawables locales para iconos.

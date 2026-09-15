@@ -6,6 +6,12 @@
 package net.newpipe.app.viewmodel.player
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import net.newpipe.app.bookmark.BookmarkRepository
+import net.newpipe.app.bookmark.SavedVideo
 import net.newpipe.app.player.PlaybackStatus
 import net.newpipe.app.player.VideoPlayer
 import org.koin.core.annotation.KoinViewModel
@@ -15,9 +21,39 @@ import org.koin.core.annotation.KoinViewModel
  * Agrupa toda la lógica de control para que la UI solo dibuje y reaccione.
  */
 @KoinViewModel
-class PlayerViewModel(private val player: VideoPlayer) : ViewModel() {
+class PlayerViewModel(
+    private val player: VideoPlayer,
+    private val bookmarkRepository: BookmarkRepository
+) : ViewModel() {
 
     val playerState = player.state
+
+    // Guardar los metadatos del video actual
+    private var currentSavedVideo: SavedVideo? = null
+    private var currentStreamUrl: String = ""
+
+    val isBookmarked = bookmarkRepository.bookmarks.map { list ->
+        list.any { it.streamUrl == currentStreamUrl }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    fun initializeVideo(url: String, title: String, uploader: String, duration: String) {
+        currentStreamUrl = url
+        currentSavedVideo = SavedVideo(
+            title = title,
+            uploaderName = uploader,
+            duration = duration,
+            thumbnailUrl = null,
+            streamUrl = url,
+            savedAtMs = 0L
+        )
+    }
+
+    /** Alterna el estado de guardado (Bookmark) */
+    fun toggleBookmark() {
+        currentSavedVideo?.let {
+            bookmarkRepository.toggleBookmark(it)
+        }
+    }
 
     /** Inicia la reproducción */
     fun play(url: String) {

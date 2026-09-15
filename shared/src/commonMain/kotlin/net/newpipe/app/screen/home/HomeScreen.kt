@@ -31,6 +31,7 @@ import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -46,6 +47,7 @@ import net.newpipe.app.navigation.Navigator
 import net.newpipe.app.search.SearchResultItem
 import net.newpipe.app.viewmodel.search.SearchViewModel
 import newpipe.shared.generated.resources.Res
+import newpipe.shared.generated.resources.ic_favorite
 import newpipe.shared.generated.resources.ic_cloud_download
 import newpipe.shared.generated.resources.ic_file_download
 import newpipe.shared.generated.resources.ic_search
@@ -74,11 +76,14 @@ fun HomeScreen(
         error = error,
         onItemClick = { item ->
             viewModel.resolveAndPlay(item) { streamUrl ->
-                navigator.navigateTo(Destination.Player(streamUrl = streamUrl, title = item.title))
+                navigator.navigateTo(Destination.Player(streamUrl = streamUrl, title = item.title, uploaderName = item.uploaderName))
             }
         },
         onDownloadsClick = {
             navigator.navigateTo(Destination.Downloads)
+        },
+        onBookmarksClick = {
+            navigator.navigateTo(Destination.Bookmarks)
         },
         onDownloadClick = { item ->
             viewModel.enqueueDownload(item)
@@ -96,6 +101,7 @@ fun HomeScreenContent(
     error: String? = null,
     onItemClick: (SearchResultItem) -> Unit = {},
     onDownloadsClick: () -> Unit = {},
+    onBookmarksClick: () -> Unit = {},
     onDownloadClick: (SearchResultItem) -> Unit = {}
 ) {
     Scaffold { paddingValues ->
@@ -134,6 +140,16 @@ fun HomeScreenContent(
                 
                 Spacer(Modifier.width(8.dp))
                 
+                androidx.compose.material3.IconButton(
+                    onClick = onBookmarksClick,
+                    modifier = Modifier.padding(top = 4.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_favorite),
+                        contentDescription = "Favoritos"
+                    )
+                }
+
                 androidx.compose.material3.IconButton(
                     onClick = onDownloadsClick,
                     modifier = Modifier.padding(top = 4.dp)
@@ -182,7 +198,7 @@ private fun ResultsGrid(
         modifier = Modifier.fillMaxSize()
     ) {
         items(items = results, key = { it.streamUrl }) { item ->
-            VideoGridCard(
+            VideoGridItem(
                 item = item, 
                 onClick = { onItemClick(item) },
                 onDownload = { onDownloadClick(item) }
@@ -192,7 +208,7 @@ private fun ResultsGrid(
 }
 
 @Composable
-private fun VideoGridCard(
+fun VideoGridItem(
     item: SearchResultItem,
     onClick: () -> Unit,
     onDownload: () -> Unit

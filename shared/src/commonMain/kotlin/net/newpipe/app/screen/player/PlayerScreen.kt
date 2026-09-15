@@ -26,8 +26,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -46,10 +46,14 @@ import net.newpipe.app.player.PlaybackStatus
 import net.newpipe.app.player.VideoPlayerState
 import net.newpipe.app.viewmodel.player.PlayerViewModel
 import newpipe.shared.generated.resources.Res
+import newpipe.shared.generated.resources.ic_favorite
+import newpipe.shared.generated.resources.ic_favorite_border
 import newpipe.shared.generated.resources.ic_fullscreen
 import newpipe.shared.generated.resources.ic_pause
 import newpipe.shared.generated.resources.ic_play
 import newpipe.shared.generated.resources.ic_volume_up
+// Íconos para Bookmarks (asumiremos material icons estándar o drawables de NewPipe)
+// Como la fuente Res podría no tener los íconos de bookmark, usaremos Material Icons de Compose si es posible
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -65,10 +69,17 @@ fun PlayerScreen(
     viewModel: PlayerViewModel = koinViewModel()
 ) {
     val state by viewModel.playerState.collectAsStateWithLifecycle()
+    val isBookmarked by viewModel.isBookmarked.collectAsStateWithLifecycle()
     val fullscreenController = LocalFullscreenController.current
     val isFullscreen = fullscreenController.isFullscreen
 
     LaunchedEffect(destination.streamUrl) {
+        viewModel.initializeVideo(
+            url = destination.streamUrl,
+            title = destination.title,
+            uploader = destination.uploaderName ?: "Unknown",
+            duration = "00:00" // O pasarlo por el destination
+        )
         viewModel.play(destination.streamUrl)
     }
 
@@ -135,9 +146,11 @@ fun PlayerScreen(
             PlayerControls(
                 state = state,
                 isFullscreen = isFullscreen,
+                isBookmarked = isBookmarked,
                 onTogglePlayPause = viewModel::togglePlayPause,
                 onSeekPercentage = viewModel::seekToPercentage,
                 onToggleFullscreen = fullscreenController::toggleFullscreen,
+                onToggleBookmark = viewModel::toggleBookmark,
                 modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainerLowest)
             )
         }
@@ -148,9 +161,11 @@ fun PlayerScreen(
 private fun PlayerControls(
     state: VideoPlayerState,
     isFullscreen: Boolean,
+    isBookmarked: Boolean,
     onTogglePlayPause: () -> Unit,
     onSeekPercentage: (Float) -> Unit,
     onToggleFullscreen: () -> Unit,
+    onToggleBookmark: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     // Estado local para la posición del slider mientras se arrastra
@@ -191,8 +206,17 @@ private fun PlayerControls(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Placeholder a la izquierda para centrar el Play
-            Row(modifier = Modifier.weight(1f)) {}
+            // Placeholder a la izquierda para centrar el Play y añadir Bookmark
+            Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onToggleBookmark) {
+                    val favIcon = if (isBookmarked) Res.drawable.ic_favorite else Res.drawable.ic_favorite_border
+                    Icon(
+                        painter = painterResource(favIcon),
+                        contentDescription = "Guardar Video",
+                        tint = if (isBookmarked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
 
             IconButton(onClick = onTogglePlayPause, modifier = Modifier.size(64.dp)) {
                 val icon = if (state.playbackStatus == PlaybackStatus.PLAYING) {

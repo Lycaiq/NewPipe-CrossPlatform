@@ -45,6 +45,10 @@ fun navModule() = module {
     navigation<Destination.Downloads> { destination ->
         net.newpipe.app.screen.download.DownloadScreen(destination = destination)
     }
+
+    navigation<Destination.Bookmarks> {
+        net.newpipe.app.screen.bookmark.BookmarksScreen()
+    }
 }
 
 /**

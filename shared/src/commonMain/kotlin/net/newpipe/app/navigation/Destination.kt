@@ -29,8 +29,11 @@ sealed interface Destination : NavKey {
      * Usamos un data class y no data object porque necesitamos pasar la URL.
      */
     @Serializable
-    data class Player(val streamUrl: String, val title: String = "") : Destination
+    data class Player(val streamUrl: String, val title: String = "", val uploaderName: String? = null) : Destination
 
     @Serializable
     data object Downloads : Destination
+    
+    @Serializable
+    data object Bookmarks : Destination
 }
