@@ -2,6 +2,23 @@
 <PreferenceScreen  xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:title="@string/settings_category_backup_restore_title">
+    <PreferenceCategory
+        android:title="Google Drive Sync">
+        <Preference
+            android:key="@string/sync_file_title"
+            android:summary="@string/sync_file_summary"
+            android:title="@string/sync_file_title"
+            app:singleLineTitle="false"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="@string/sync_now_title"
+            android:summary="@string/sync_now_summary"
+            android:title="@string/sync_now_title"
+            app:singleLineTitle="false"
+            app:iconSpaceReserved="false" />
+    </PreferenceCategory>
+
     <Preference
         android:key="@string/import_data"
         android:summary="@string/import_data_summary"

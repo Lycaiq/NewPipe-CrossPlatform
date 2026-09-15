@@ -216,6 +216,17 @@
     <string name="share_data_title">Share database</string>
     <string name="share_data_summary">Export your database and share it to other apps (e.g. Save to Drive)</string>
 
+    <string name="sync_file_title">Link Sync File</string>
+    <string name="sync_file_summary">Select a ZIP file on Google Drive to link for quick sync</string>
+    <string name="sync_now_title">Sync Now</string>
+    <string name="sync_now_summary">Push or pull your database to the linked file</string>
+    <string name="sync_file_linked">Linked to: %1$s</string>
+    <string name="sync_file_not_linked">Please link a sync file first.</string>
+    <string name="sync_direction_message">Choose sync direction for Google Drive:</string>
+    <string name="sync_download">Download (Restore)</string>
+    <string name="sync_upload">Upload (Backup)</string>
+
+
     <string name="export_data_summary">Export history, subscriptions, playlists and settings</string>
     <string name="clear_cookie_summary">Clear cookies that NewPipe stores when you solve a reCAPTCHA</string>
     <string name="clear_views_history_title">Clear watch history</string>
