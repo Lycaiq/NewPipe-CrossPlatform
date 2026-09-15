@@ -18,6 +18,19 @@ dependencies {
     implementation(compose.desktop.currentOs)
     implementation(libs.jetbrains.coroutines.swing)
     implementation(libs.jetbrains.compose.preview)
+
+    // VLCj: el único reproductor JVM con soporte real de HLS/DASH sin browser engine.
+    // vlcj-natives incluye los bindings nativos precompilados para Windows/macOS/Linux.
+    implementation(libs.vlcj.core)
+    implementation(libs.vlcj.natives)
+
+    // Extractor de NewPipe + OkHttp como downloader
+    implementation(libs.newpipe.extractor)
+    implementation(libs.squareup.okhttp)
+    
+    // Coil para carga de imágenes
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
 }
 
 compose.desktop {
@@ -28,6 +41,16 @@ compose.desktop {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = NEWPIPE_APPLICATION_ID_NEW
             packageVersion = NEWPIPE_VERSION_NAME
+
+            windows {
+                menuGroup = "NewPipe"
+                dirChooser = true
+                shortcut = true
+            }
+        }
+
+        buildTypes.release.proguard {
+            isEnabled.set(false)
         }
     }
 }

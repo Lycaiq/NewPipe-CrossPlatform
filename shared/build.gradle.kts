@@ -113,12 +113,14 @@ kotlin {
 
                 implementation(libs.russhwolf.settings.core)
                 implementation(libs.touchlab.kermit)
+                implementation(libs.coil.compose)
             }
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test.core)
             implementation(libs.jetbrains.compose.test.ui)
             implementation(libs.russhwolf.settings.test)
+            implementation(libs.kotlinx.coroutines.test)
         }
         androidMain.dependencies {
             implementation(libs.jetbrains.compose.preview)
@@ -139,6 +141,7 @@ kotlin {
         val jvmTest by getting {
             dependencies {
                 implementation(compose.desktop.currentOs)
+                implementation(libs.kotlin.test.core)
             }
         }
     }
@@ -154,5 +157,18 @@ aboutLibraries {
         prettyPrint = true
         variant = "metadataIosMain"
         excludeFields.addAll("organization", "scm", "funding")
+    }
+}
+
+kotlin {
+    sourceSets {
+        val jvmMain by getting {
+            dependencies {
+                implementation(libs.newpipe.extractor)
+                implementation(libs.squareup.okhttp)
+                implementation("uk.co.caprica:vlcj:4.8.2")
+                implementation(libs.coil.network.okhttp)
+            }
+        }
     }
 }

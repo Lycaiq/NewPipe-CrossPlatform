@@ -44,3 +44,11 @@ credentials/
 secrets/
 *.pem
 *.key
+
+# artefactos de distribución windows — estos los genera jpackage, no los pusheamos
+*.msi
+*.exe
+desktopApp/build/compose/
+
+# directorios de trabajo temporales de vlcj
+vlc-natives/

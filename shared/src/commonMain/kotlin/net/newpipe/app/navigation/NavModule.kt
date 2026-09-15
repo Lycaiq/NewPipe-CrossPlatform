@@ -7,8 +7,8 @@ package net.newpipe.app.navigation
 
 import androidx.compose.runtime.mutableStateListOf
 import co.touchlab.kermit.Logger
-import net.newpipe.app.screen.about.AboutScreen
-import net.newpipe.app.screen.settings.SettingsHomeScreen
+import net.newpipe.app.screen.home.HomeScreen
+import net.newpipe.app.screen.player.PlayerScreen
 import org.koin.core.annotation.KoinExperimentalAPI
 import org.koin.core.annotation.Provided
 import org.koin.core.annotation.Singleton
@@ -25,12 +25,41 @@ import org.koin.plugin.module.dsl.single
 fun navModule() = module {
     single<Navigator>()
 
+    navigation<Destination.Home> {
+        HomeScreen()
+    }
+
     navigation<Destination.About> {
-        AboutScreen()
+        net.newpipe.app.screen.about.AboutScreen()
     }
 
     navigation<Destination.Settings> {
-        SettingsHomeScreen()
+        net.newpipe.app.screen.settings.SettingsHomeScreen()
+    }
+
+    // Player necesita acceso a la destination para sacar la URL y el título
+    navigation<Destination.Player> { destination ->
+        PlayerScreen(destination = destination)
+    }
+
+    navigation<Destination.Downloads> { destination ->
+        net.newpipe.app.screen.download.DownloadScreen(destination = destination)
+    }
+
+    navigation<Destination.Bookmarks> {
+        net.newpipe.app.screen.bookmark.BookmarksScreen()
+    }
+
+    navigation<Destination.History> {
+        net.newpipe.app.screen.history.HistoryScreen()
+    }
+
+    navigation<Destination.Channel> { destination ->
+        net.newpipe.app.screen.channel.ChannelScreen(destination)
+    }
+
+    navigation<Destination.Subscriptions> {
+        net.newpipe.app.screen.subscription.SubscriptionsScreen()
     }
 }
 
