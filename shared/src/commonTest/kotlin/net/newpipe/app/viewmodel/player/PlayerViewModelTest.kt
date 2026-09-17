@@ -123,7 +123,8 @@ class FakeVideoPlayer : VideoPlayer {
 class FakeBookmarkRepository : net.newpipe.app.bookmark.BookmarkRepository {
     override val bookmarks = MutableStateFlow(emptyList<net.newpipe.app.bookmark.SavedVideo>())
     override fun toggleBookmark(video: net.newpipe.app.bookmark.SavedVideo) {}
-    override fun removeBookmark(streamUrl: String) {}
+    override fun isBookmarked(streamUrl: String): Boolean = false
+    override fun reload() {}
 }
 
 class FakeHistoryRepository : net.newpipe.app.history.HistoryRepository {
@@ -131,6 +132,7 @@ class FakeHistoryRepository : net.newpipe.app.history.HistoryRepository {
     override fun addToHistory(item: net.newpipe.app.history.HistoryItem) {}
     override fun clearHistory() {}
     override fun removeHistoryItem(streamUrl: String) {}
+    override fun reload() {}
 }
 
 class FakeSearchRepository : net.newpipe.app.search.SearchRepository {

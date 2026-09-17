@@ -17,6 +17,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewWrapper
@@ -32,6 +33,7 @@ import newpipe.shared.generated.resources.Res
 import newpipe.shared.generated.resources.ic_search
 import newpipe.shared.generated.resources.search
 import newpipe.shared.generated.resources.settings
+import newpipe.shared.generated.resources.settings_category_backup_restore_title
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -43,6 +45,31 @@ fun SettingsHomeScreen(
     viewModel: SettingsViewModel = koinViewModel()
 ) {
     val categories by viewModel.categories.collectAsStateWithLifecycle()
+    var showBackupDialog by androidx.compose.runtime.mutableStateOf(false)
+
+    if (showBackupDialog) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showBackupDialog = false },
+            title = { androidx.compose.material3.Text(stringResource(Res.string.settings_category_backup_restore_title)) },
+            text = { androidx.compose.material3.Text("¿Qué deseas hacer con tus datos locales?") },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    showBackupDialog = false
+                    viewModel.exportData()
+                }) {
+                    androidx.compose.material3.Text("Exportar")
+                }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    showBackupDialog = false
+                    viewModel.importData()
+                }) {
+                    androidx.compose.material3.Text("Importar")
+                }
+            }
+        )
+    }
 
     SettingsHomeScreenContent(
         categories = categories.map { type ->
@@ -50,7 +77,11 @@ fun SettingsHomeScreen(
                 title = type.title,
                 icon = type.icon,
                 // TODO: Replace with a Destination once sub-screens are migrated
-                onClick = {}
+                onClick = {
+                    if (type == SettingsCategoryType.BACKUP_RESTORE) {
+                        showBackupDialog = true
+                    }
+                }
             )
         },
         onNavigateUp = { navigator.navigateUp() }

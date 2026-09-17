@@ -24,4 +24,5 @@ interface HistoryRepository {
     fun addToHistory(item: HistoryItem)
     fun clearHistory()
     fun removeHistoryItem(streamUrl: String)
+    fun reload()
 }

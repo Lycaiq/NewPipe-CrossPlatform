@@ -135,6 +135,7 @@ class FakeHistoryRepository : net.newpipe.app.history.HistoryRepository {
     override fun addToHistory(item: net.newpipe.app.history.HistoryItem) {}
     override fun clearHistory() {}
     override fun removeHistoryItem(streamUrl: String) {}
+    override fun reload() {}
 }
 
 class FakeSubscriptionRepository : net.newpipe.app.subscription.SubscriptionRepository {
@@ -142,6 +143,7 @@ class FakeSubscriptionRepository : net.newpipe.app.subscription.SubscriptionRepo
     override fun addSubscription(item: net.newpipe.app.subscription.SubscriptionItem) {}
     override fun removeSubscription(url: String) {}
     override fun isSubscribed(url: String): Boolean = false
+    override fun reload() {}
 }
 
 class FakeDownloadManager : net.newpipe.app.download.DownloadManager {

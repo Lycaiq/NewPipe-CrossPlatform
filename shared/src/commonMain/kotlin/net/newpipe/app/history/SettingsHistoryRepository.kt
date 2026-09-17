@@ -70,4 +70,8 @@ class SettingsHistoryRepository(
         }
         persist()
     }
+
+    override fun reload() {
+        loadHistory()
+    }
 }

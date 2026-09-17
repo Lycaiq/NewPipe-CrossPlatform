@@ -20,4 +20,5 @@ interface SubscriptionRepository {
     fun addSubscription(item: SubscriptionItem)
     fun removeSubscription(url: String)
     fun isSubscribed(url: String): Boolean
+    fun reload()
 }

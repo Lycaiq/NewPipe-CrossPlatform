@@ -24,4 +24,5 @@ interface BookmarkRepository {
     
     fun isBookmarked(streamUrl: String): Boolean
     fun toggleBookmark(video: SavedVideo)
+    fun reload()
 }
