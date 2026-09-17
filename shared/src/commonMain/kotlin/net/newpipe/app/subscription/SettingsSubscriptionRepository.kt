@@ -64,4 +64,8 @@ class SettingsSubscriptionRepository(
     override fun isSubscribed(url: String): Boolean {
         return _subscriptions.value.any { it.url == url }
     }
+
+    override fun reload() {
+        loadSubscriptions()
+    }
 }

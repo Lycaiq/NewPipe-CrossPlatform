@@ -20,4 +20,5 @@ actual val platformModule: Module = module {
     single<net.newpipe.app.history.HistoryRepository> { net.newpipe.app.history.SettingsHistoryRepository(get()) }
     single<net.newpipe.app.bookmark.BookmarkRepository> { net.newpipe.app.bookmark.SettingsBookmarkRepository(get()) }
     single<net.newpipe.app.subscription.SubscriptionRepository> { net.newpipe.app.subscription.SettingsSubscriptionRepository(get()) }
+    single<net.newpipe.app.backup.BackupRepository> { net.newpipe.app.backup.JVMBackupRepository(get(), get(), get(), get()) }
 }

@@ -69,4 +69,8 @@ class SettingsBookmarkRepository(
             newList.sortedByDescending { it.savedAtMs }
         }
     }
+
+    override fun reload() {
+        loadFromSettings()
+    }
 }
